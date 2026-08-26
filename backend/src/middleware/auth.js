@@ -1,10 +1,5 @@
 import { supabaseAdmin } from '../config/supabase.js';
 
-/**
- * Verifies the Supabase access token on every request, then resolves the
- * caller to exactly one of: a students row, or an admins row. Neither
- * existing is a 403 (authenticated but not provisioned), not a 401.
- */
 export async function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;

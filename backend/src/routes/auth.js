@@ -10,12 +10,6 @@ import { escapeLikeValue } from '../utils/text.js';
 
 export const authRouter = Router();
 
-/**
- * First-time student registration. Students already exist as a roster row
- * (loaded by an admin) but have no Supabase Auth account yet. This endpoint
- * checks the email + student number match a roster row before creating the
- * auth account, enforcing "only registered course students can access".
- */
 authRouter.post('/register', registerLimiter, validate(registerSchema), async (req, res) => {
   const { email, studentNumber, password } = req.body;
 

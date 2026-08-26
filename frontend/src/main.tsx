@@ -16,8 +16,7 @@ const queryClient = new QueryClient({
       staleTime: 30_000,
       refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
-        // Don't burn retries on auth/validation/not-found errors — those
-        // won't succeed on a second attempt.
+
         if (error instanceof ApiError && error.status >= 400 && error.status < 500) return false
         return failureCount < 2
       },

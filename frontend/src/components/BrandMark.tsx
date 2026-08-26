@@ -1,12 +1,13 @@
-import { BookHeart } from 'lucide-react'
+import cmrLogo from '@/assets/cmr-logo.png'
 
 export function BrandMark() {
   return (
     <div className="mb-6 flex flex-col items-center gap-2 text-center">
-      <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-        <BookHeart className="size-5" />
-      </div>
+      <img src={cmrLogo} alt="Centre for Meditation Research" className="size-16 rounded-full shadow-sm" />
       <span className="text-lg font-semibold tracking-tight">CMR Weekly Digital Diary</span>
+      <span className="max-w-xs text-xs text-muted-foreground">
+        Certificate Course on Translating the Science of Happiness and Meditation into Practice
+      </span>
     </div>
   )
 }

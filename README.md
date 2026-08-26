@@ -62,10 +62,12 @@ npm install
 npm run dev             # http://localhost:5173
 ```
 
+- `/` is a public landing page (marketing/overview); it redirects straight to
+  `/dashboard` or `/admin` if you're already signed in.
 - Admins log in at `/login` with the credentials from `create-admin` and are
   routed to `/admin`.
 - Students self-register once at `/register` using the email + student ID an
-  admin pre-loaded, then log in at `/login`.
+  admin pre-loaded, then log in at `/login` and land on `/dashboard`.
 
 ## Notes on the setup
 
@@ -162,6 +164,10 @@ statistics, pre/post assessments, research dashboard (Phase 3). The schema
 was designed so these can be added as new columns/tables without reworking
 what's here — e.g. a `meditation_logs` or `wellbeing_checkins` table keyed
 on `(student_id, week_number)` alongside `diary_entries`.
+
+Also not yet built: the course intake/module details shown on the public
+landing page (`/`) are currently hardcoded in `LandingPage.tsx` rather than
+admin-editable. See `SRS/intake-management.md` for the planned design.
 
 ## Security note
 

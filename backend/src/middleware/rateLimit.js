@@ -9,9 +9,6 @@ export const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please slow down.' },
 });
 
-// Registration creates a Supabase Auth user per call — worth a tighter,
-// separate limit so it can't be hammered to enumerate the student roster
-// or spam account creation, independent of the general API budget.
 export const registerLimiter = rateLimit({
   windowMs: 15 * 60_000,
   max: 10,

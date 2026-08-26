@@ -1,6 +1,8 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { BookHeart, ChevronsUpDown, LogOut } from 'lucide-react'
+import { Flower2, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { cn } from '@/lib/utils'
+import cmrLogo from '@/assets/cmr-logo.png'
 import { studentNav, adminNav } from './nav-config'
 import {
   Sidebar,
@@ -15,31 +17,11 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-
-function initials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join('')
-}
 
 export function AppSidebar() {
-  const { role, profile, signOut } = useAuth()
+  const { role, signOut } = useAuth()
   const location = useLocation()
   const nav = role === 'admin' ? adminNav : studentNav
-  const email = profile?.email ?? ''
-  const name = profile ? ('name' in profile && profile.name ? profile.name : email) : ''
 
   return (
     <Sidebar collapsible="icon">
@@ -47,10 +29,8 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <NavLink to={role === 'admin' ? '/admin' : '/'}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <BookHeart className="size-4" />
-                </div>
+              <NavLink to={role === 'admin' ? '/admin' : '/dashboard'}>
+                <img src={cmrLogo} alt="" className="aspect-square size-8 shrink-0 rounded-full" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">CMR Digital Diary</span>
                   <span className="truncate text-xs text-muted-foreground">
@@ -87,35 +67,30 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
+        {role === 'student' && (
+          <div className="mx-1 mb-1 flex flex-col items-center gap-2 rounded-lg border border-sidebar-border bg-primary/5 px-3 py-4 text-center group-data-[collapsible=icon]:hidden">
+            <div className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Flower2 className="size-5" />
+            </div>
+            <p className="text-xs leading-relaxed text-sidebar-foreground/80">
+              Take a few minutes each week to reflect, be aware and grow.
+            </p>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg">
-                  <Avatar className="size-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg">{initials(name || '?')}</AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{email}</span>
-                  </div>
-                  <ChevronsUpDown className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" side="top">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="grid text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{email}</span>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>
-                  <LogOut className="size-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton
+              onClick={() => signOut()}
+              tooltip="Sign out"
+              className={cn(
+                'justify-center border border-red-200 bg-red-50 text-red-600',
+                'hover:bg-red-100 hover:text-red-700 active:bg-red-100 active:text-red-700',
+                'dark:border-red-900/40 dark:bg-red-950/25 dark:text-red-400 dark:hover:bg-red-950/40'
+              )}
+            >
+              <LogOut className="size-4" />
+              <span>Sign out</span>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

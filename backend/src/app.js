@@ -11,12 +11,11 @@ import { apiLimiter } from './middleware/rateLimit.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import { authRouter } from './routes/auth.js';
 import { diaryRouter } from './routes/diary.js';
+import { checkinRouter } from './routes/checkin.js';
 import { adminRouter } from './routes/admin.js';
 
 export const app = express();
 
-// Needed for express-rate-limit / req.ip to see the real client IP when
-// deployed behind a reverse proxy or load balancer.
 app.set('trust proxy', 1);
 
 app.use(helmet());
@@ -40,6 +39,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api', apiLimiter);
 app.use('/api/auth', authRouter);
 app.use('/api/diary', diaryRouter);
+app.use('/api/checkin', checkinRouter);
 app.use('/api/admin', adminRouter);
 
 app.use(notFoundHandler);

@@ -1,13 +1,31 @@
 import { z } from 'zod';
 
-// A weekly diary entry is a reflective free-write, not a document upload —
-// this cap just guards against pathological payloads, not real usage.
-const MAX_CONTENT_LENGTH = 20_000;
+const MAX_CONTENT_LENGTH = 120_000;
 
 export const weekParamSchema = z.object({
   week: z.coerce.number().int().min(1).max(104),
 });
 
+const tiptapNode = z.lazy(() =>
+  z.object({
+    type: z.string(),
+    attrs: z.record(z.string(), z.unknown()).optional(),
+    content: z.array(tiptapNode).optional(),
+    text: z.string().optional(),
+    marks: z
+      .array(z.object({ type: z.string(), attrs: z.record(z.string(), z.unknown()).optional() }))
+      .optional(),
+  })
+);
+
+const tiptapDoc = z.object({
+  type: z.literal('doc'),
+  content: z.array(tiptapNode).default([]),
+});
+
 export const diaryContentSchema = z.object({
-  content: z.string().max(MAX_CONTENT_LENGTH, `Entry must be under ${MAX_CONTENT_LENGTH} characters`),
+  content: tiptapDoc.refine((doc) => JSON.stringify(doc).length <= MAX_CONTENT_LENGTH, {
+    message: 'Entry is too large',
+  }),
+  researchOptOut: z.boolean().optional(),
 });

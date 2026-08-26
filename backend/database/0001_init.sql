@@ -1,4 +1,4 @@
--- CMR Weekly Digital Diary — initial schema
+-- CMR Weekly Digital Diary: initial schema
 -- Run this in the Supabase SQL Editor (or via `supabase db push`).
 
 create extension if not exists pgcrypto;
@@ -88,7 +88,7 @@ create trigger trg_diary_entries_updated_at
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- The Express backend talks to Supabase with the service_role key, which
--- bypasses RLS entirely — these policies are defense-in-depth in case the
+-- bypasses RLS entirely. These policies are defense-in-depth in case the
 -- anon/client key is ever used to query these tables directly (it currently
 -- is not; the frontend only uses supabase-js for Auth).
 -- ---------------------------------------------------------------------------
