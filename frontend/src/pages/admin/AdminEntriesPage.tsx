@@ -12,6 +12,7 @@ import {
   NotebookText,
   PencilLine,
   Search,
+  ShieldOff,
   User,
 } from 'lucide-react'
 import { api, ApiError, downloadExport } from '@/lib/api'
@@ -158,7 +159,6 @@ export function AdminEntriesPage() {
                 <TableRow>
                   <TableHead>Student ID</TableHead>
                   <TableHead>Student</TableHead>
-                  <TableHead>Email</TableHead>
                   <TableHead>Week</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Words</TableHead>
@@ -171,7 +171,6 @@ export function AdminEntriesPage() {
                   <TableRow key={e.id}>
                     <TableCell className="text-muted-foreground">{e.student?.student_number}</TableCell>
                     <TableCell className="font-medium">{e.student?.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{e.student?.email}</TableCell>
                     <TableCell>Week {e.week_number}</TableCell>
                     <TableCell>
                       {e.status === 'submitted' ? (
@@ -223,6 +222,11 @@ export function AdminEntriesPage() {
             <MetaRow icon={CalendarClock} label="Submitted" value={formatDateTime(selected?.submitted_at)} />
             <MetaRow icon={Clock} label="Last saved" value={formatDateTime(selected?.updated_at)} />
             <MetaRow icon={User} label="Entry date" value={formatDate(selected?.entry_date)} />
+            <MetaRow
+              icon={ShieldOff}
+              label="Research"
+              value={selected?.research_opt_out ? 'Excluded' : 'Included'}
+            />
           </div>
         </DialogContent>
       </Dialog>

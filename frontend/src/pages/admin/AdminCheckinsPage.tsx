@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Flower2, HeartHandshake, Search, Smile } from 'lucide-react'
+import { CheckCircle2, Flower2, HeartHandshake, Search } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { AdminCheckin, CheckinCohortStats, MoodFeeling } from '@/lib/types'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { MOOD_LABELS } from '@/lib/mood'
+import { MOOD_LABELS, moodClassName, moodIcon } from '@/lib/mood'
+import { cn } from '@/lib/utils'
 import { Pagination } from '@/components/Pagination'
 import { WeeklyCheckin } from '@/components/WeeklyCheckin'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -50,9 +51,20 @@ function CohortSnapshot() {
             </div>
           ))}
           <div className="rounded-lg border bg-muted/30 px-4 py-3">
-            <p className="text-xl font-semibold">
-              {topMood && topMood[1] > 0 ? MOOD_LABELS[topMood[0] as MoodFeeling] : '-'}
-            </p>
+            {topMood && topMood[1] > 0 ? (
+              (() => {
+                const feeling = topMood[0] as MoodFeeling
+                const MoodIcon = moodIcon(feeling)
+                return (
+                  <p className="flex items-center gap-1.5 text-xl font-semibold">
+                    <MoodIcon className={cn('size-5', moodClassName(feeling))} />
+                    {MOOD_LABELS[feeling]}
+                  </p>
+                )
+              })()
+            ) : (
+              <p className="text-xl font-semibold">-</p>
+            )}
             <p className="mt-0.5 text-xs text-muted-foreground">Most common mood</p>
           </div>
         </div>
@@ -169,7 +181,10 @@ export function AdminCheckinsPage() {
                     <TableCell>
                       {c.checkin.mood?.feeling ? (
                         <Badge variant="secondary" className="gap-1">
-                          <Smile className="size-3.5" />
+                          {(() => {
+                            const MoodIcon = moodIcon(c.checkin.mood?.feeling)
+                            return <MoodIcon className={cn('size-3.5', moodClassName(c.checkin.mood?.feeling))} />
+                          })()}
                           {MOOD_LABELS[c.checkin.mood.feeling]}
                         </Badge>
                       ) : (
@@ -194,7 +209,7 @@ export function AdminCheckinsPage() {
       </Card>
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+        <DialogContent className="max-h-[85vh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selected?.student?.name}, Week {selected?.week_number}
@@ -206,7 +221,7 @@ export function AdminCheckinsPage() {
               )}
             </DialogTitle>
           </DialogHeader>
-          {selected && <WeeklyCheckin value={selected.checkin} onChange={() => {}} disabled alwaysOpen />}
+          {selected && <WeeklyCheckin value={selected.checkin} onChange={() => {}} disabled />}
         </DialogContent>
       </Dialog>
     </div>

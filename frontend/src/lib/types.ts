@@ -52,12 +52,12 @@ export type DiaryEntry = {
   student_id: string
   week_number: number
   entry_date: string
-
   content?: JSONContent
   word_count: number
   status: 'draft' | 'submitted'
   submitted_at: string | null
   updated_at?: string
+  research_opt_out?: boolean
   student?: Pick<Student, 'id' | 'name' | 'email' | 'student_number'>
 }
 
@@ -65,6 +65,7 @@ export type WeekSummary = {
   weekNumber: number
   status: 'not_started' | 'draft' | 'submitted'
   submittedAt: string | null
+  wordCount: number
   isCurrent: boolean
   isOpen: boolean
   isLocked: boolean

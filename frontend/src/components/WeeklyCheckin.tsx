@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Flower2, Heart, Plus, Sparkles, Target } from 'lucide-react'
-import type { DiaryCheckin, GoalOutcome, MoodFeeling } from '@/lib/types'
+import { Flower2, Heart, Sparkles, Target } from 'lucide-react'
+import type { DiaryCheckin, GoalOutcome } from '@/lib/types'
+import { MOOD_OPTIONS } from '@/lib/mood'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,14 +8,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-
-const MOOD_OPTIONS: { value: MoodFeeling; emoji: string; label: string }[] = [
-  { value: 'very_good', emoji: '😊', label: 'Very good' },
-  { value: 'good', emoji: '🙂', label: 'Good' },
-  { value: 'okay', emoji: '😐', label: 'Okay' },
-  { value: 'not_great', emoji: '🙁', label: 'Not great' },
-  { value: 'difficult', emoji: '😔', label: 'Difficult week' },
-]
 
 const RATING_FIELDS: { key: 'happiness' | 'stress' | 'calmness' | 'sleepQuality' | 'wellbeing'; label: string }[] = [
   { key: 'happiness', label: 'Happiness' },
@@ -32,7 +24,26 @@ const GOAL_OUTCOMES: { value: GoalOutcome; label: string }[] = [
   { value: 'exceeded', label: 'Exceeded' },
 ]
 
-function RatingButtons({
+function SectionHeading({
+  icon: Icon,
+  tint,
+  title,
+}: {
+  icon: typeof Flower2
+  tint: string
+  title: string
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg', tint)}>
+        <Icon className="size-4" />
+      </div>
+      <h3 className="text-sm font-semibold">{title}</h3>
+    </div>
+  )
+}
+
+function RatingMeter({
   value,
   onChange,
   disabled,
@@ -42,24 +53,27 @@ function RatingButtons({
   disabled?: boolean
 }) {
   return (
-    <div className="flex gap-1.5">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(n)}
-          className={cn(
-            'flex size-8 items-center justify-center rounded-full border text-sm font-medium transition-colors',
-            value === n
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-input text-muted-foreground hover:bg-accent',
-            disabled && 'pointer-events-none opacity-60'
-          )}
-        >
-          {n}
-        </button>
-      ))}
+    <div className="flex items-center gap-2.5">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange(n)}
+            aria-label={`${n} out of 5`}
+            aria-pressed={value === n}
+            className={cn(
+              'h-2.5 w-6 rounded-full border transition-colors',
+              value !== undefined && n <= value
+                ? 'border-primary bg-primary'
+                : 'border-border bg-muted-foreground/20 hover:bg-muted-foreground/30',
+              disabled && 'pointer-events-none opacity-70'
+            )}
+          />
+        ))}
+      </div>
+      <span className="w-3 text-xs tabular-nums text-muted-foreground">{value ?? ''}</span>
     </div>
   )
 }
@@ -68,23 +82,9 @@ type WeeklyCheckinProps = {
   value: DiaryCheckin
   onChange: (next: DiaryCheckin) => void
   disabled?: boolean
-
-  alwaysOpen?: boolean
 }
 
-function hasAnyData(v: DiaryCheckin) {
-  return Boolean(
-    v.meditation?.practiced !== undefined ||
-      v.mood?.feeling ||
-      v.gratitude?.some((g) => g.trim()) ||
-      v.noticed?.trim() ||
-      v.goal?.intention?.trim()
-  )
-}
-
-export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyCheckinProps) {
-  const [open, setOpen] = useState(() => alwaysOpen || hasAnyData(value) || Boolean(disabled))
-
+export function WeeklyCheckin({ value, onChange, disabled }: WeeklyCheckinProps) {
   function updateMeditation(patch: Partial<NonNullable<DiaryCheckin['meditation']>>) {
     onChange({ ...value, meditation: { ...value.meditation, ...patch } })
   }
@@ -100,15 +100,6 @@ export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyC
     onChange({ ...value, gratitude: next })
   }
 
-  if (!open) {
-    return (
-      <Button type="button" variant="outline" onClick={() => setOpen(true)} className="w-full border-dashed">
-        <Plus className="size-4" />
-        Add weekly check-in (optional)
-      </Button>
-    )
-  }
-
   const meditation = value.meditation ?? {}
   const avgPerSession =
     meditation.practiced && meditation.minutes && meditation.sessions
@@ -117,25 +108,13 @@ export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyC
 
   return (
     <Card>
-      {!alwaysOpen && (
-        <CardHeader className="flex-row items-start justify-between space-y-0">
-          <div>
-            <CardTitle className="text-base">Weekly Check-in</CardTitle>
-            <CardDescription>Optional: track your practice, mood, and intentions.</CardDescription>
-          </div>
-          {!disabled && (
-            <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              Hide
-            </Button>
-          )}
-        </CardHeader>
-      )}
+      <CardHeader>
+        <CardTitle className="text-base">Weekly Check-in</CardTitle>
+        <CardDescription>Optional: track your practice, mood, and intentions.</CardDescription>
+      </CardHeader>
       <CardContent className="space-y-6">
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Flower2 className="size-4 text-primary" />
-            <h3 className="text-sm font-semibold">Meditation Practice</h3>
-          </div>
+          <SectionHeading icon={Flower2} tint="bg-primary/10 text-primary" title="Meditation Practice" />
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Meditated this week?</span>
             <Button
@@ -192,9 +171,9 @@ export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyC
                 </div>
               </div>
               {avgPerSession !== null && (
-                <p className="text-xs text-muted-foreground">
-                  Meditation this week: {meditation.minutes} minutes · Sessions: {meditation.sessions} · Average:{' '}
-                  {avgPerSession} min/session
+                <p className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  {meditation.minutes} minutes across {meditation.sessions} session{meditation.sessions === 1 ? '' : 's'}: an
+                  average of {avgPerSession} min/session.
                 </p>
               )}
               <Textarea
@@ -211,10 +190,7 @@ export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyC
         <Separator />
 
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Heart className="size-4 text-primary" />
-            <h3 className="text-sm font-semibold">Mood / Well-being Check-in</h3>
-          </div>
+          <SectionHeading icon={Heart} tint="bg-rose-500/10 text-rose-600 dark:text-rose-400" title="Mood & Well-being" />
           <p className="text-sm text-muted-foreground">How are you feeling this week?</p>
           <div className="flex flex-wrap gap-2">
             {MOOD_OPTIONS.map((m) => (
@@ -231,16 +207,16 @@ export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyC
                   disabled && 'pointer-events-none opacity-60'
                 )}
               >
-                <span>{m.emoji}</span>
+                <m.icon className={cn('size-4', value.mood?.feeling === m.value ? '' : m.className)} />
                 {m.label}
               </button>
             ))}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="divide-y rounded-lg border">
             {RATING_FIELDS.map((f) => (
-              <div key={f.key} className="flex items-center justify-between gap-3">
+              <div key={f.key} className="flex items-center justify-between gap-3 px-3 py-2.5">
                 <Label className="text-sm text-muted-foreground">{f.label}</Label>
-                <RatingButtons
+                <RatingMeter
                   value={value.mood?.[f.key]}
                   disabled={disabled}
                   onChange={(n) => updateMood({ [f.key]: n })}
@@ -253,10 +229,7 @@ export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyC
         <Separator />
 
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-primary" />
-            <h3 className="text-sm font-semibold">Gratitude Journal</h3>
-          </div>
+          <SectionHeading icon={Sparkles} tint="bg-amber-500/10 text-amber-600 dark:text-amber-400" title="Gratitude Journal" />
           <p className="text-sm text-muted-foreground">Three things I'm grateful for this week</p>
           <div className="space-y-2">
             {[0, 1, 2].map((i) => (
@@ -274,9 +247,8 @@ export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyC
 
         <Separator />
 
-        {/* What I noticed */}
         <section className="space-y-2">
-          <h3 className="text-sm font-semibold">What did you notice about yourself this week?</h3>
+          <SectionHeading icon={Sparkles} tint="bg-sky-500/10 text-sky-600 dark:text-sky-400" title="What did you notice about yourself?" />
           <p className="text-xs text-muted-foreground">
             Thoughts, emotions, behaviour, relationships, meditation, daily experiences: anything at all, or skip it.
           </p>
@@ -291,12 +263,8 @@ export function WeeklyCheckin({ value, onChange, disabled, alwaysOpen }: WeeklyC
 
         <Separator />
 
-        {/* Personal goal */}
         <section className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Target className="size-4 text-primary" />
-            <h3 className="text-sm font-semibold">Personal Goal</h3>
-          </div>
+          <SectionHeading icon={Target} tint="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" title="Personal Goal" />
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">My intention for this week</Label>
             <Textarea

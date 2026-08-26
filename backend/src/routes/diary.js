@@ -33,7 +33,7 @@ diaryRouter.get('/weeks', async (req, res) => {
   const entries = unwrap(
     await supabaseAdmin
       .from('diary_entries')
-      .select('week_number, status, entry_date, submitted_at')
+      .select('week_number, status, entry_date, submitted_at, word_count')
       .eq('student_id', req.student.id)
   );
 
@@ -46,9 +46,9 @@ diaryRouter.get('/weeks', async (req, res) => {
       weekNumber,
       status,
       submittedAt: entry?.submitted_at ?? null,
+      wordCount: entry?.word_count ?? 0,
       isCurrent: weekNumber === current,
       isOpen: weekNumber <= current,
-
       isLocked: weekNumber < current && status !== 'submitted',
       dueDate: weekDueDate(settings.course_start_date, weekNumber),
     };
@@ -82,12 +82,13 @@ diaryRouter.get('/:week', validate(weekParamSchema, 'params'), async (req, res) 
       word_count: 0,
       status: 'draft',
       submitted_at: null,
+      research_opt_out: false,
     },
     currentWeek,
   });
 });
 
-async function upsertEntry({ studentId, week, content, status }) {
+async function upsertEntry({ studentId, week, content, researchOptOut, status }) {
   const now = new Date().toISOString();
   const payload = {
     student_id: studentId,
@@ -96,6 +97,7 @@ async function upsertEntry({ studentId, week, content, status }) {
     word_count: wordCount(extractPlainText(content)),
     status,
     entry_date: new Date().toISOString().slice(0, 10),
+    ...(researchOptOut !== undefined ? { research_opt_out: researchOptOut } : {}),
     ...(status === 'submitted' ? { submitted_at: now } : {}),
   };
 
@@ -119,13 +121,13 @@ diaryRouter.put(
   validate(diaryContentSchema, 'body'),
   async (req, res) => {
     const { week } = req.params;
-    const { content } = req.body;
+    const { content, researchOptOut } = req.body;
 
     const settings = await getCourseSettings();
     assertWeekIsOpen(week, currentWeekNumber(settings));
     await assertNotSubmitted(req.student.id, week);
 
-    const entry = await upsertEntry({ studentId: req.student.id, week, content, status: 'draft' });
+    const entry = await upsertEntry({ studentId: req.student.id, week, content, researchOptOut, status: 'draft' });
     res.json({ entry });
   }
 );
@@ -136,7 +138,7 @@ diaryRouter.post(
   validate(diaryContentSchema, 'body'),
   async (req, res) => {
     const { week } = req.params;
-    const { content } = req.body;
+    const { content, researchOptOut } = req.body;
 
     if (extractPlainText(content).trim() === '') {
       throw new AppError(400, 'Diary content cannot be empty');
@@ -146,7 +148,45 @@ diaryRouter.post(
     assertWeekIsOpen(week, currentWeekNumber(settings));
     await assertNotSubmitted(req.student.id, week);
 
-    const entry = await upsertEntry({ studentId: req.student.id, week, content, status: 'submitted' });
+    const entry = await upsertEntry({ studentId: req.student.id, week, content, researchOptOut, status: 'submitted' });
     res.json({ entry });
   }
 );
+
+diaryRouter.delete('/:week', validate(weekParamSchema, 'params'), async (req, res) => {
+  const { week } = req.params;
+
+  const settings = await getCourseSettings();
+  assertWeekIsOpen(week, currentWeekNumber(settings));
+  await assertNotSubmitted(req.student.id, week);
+
+  await unwrap(
+    await supabaseAdmin.from('diary_entries').delete().eq('student_id', req.student.id).eq('week_number', week)
+  );
+  res.status(204).end();
+});
+
+diaryRouter.get('/export/csv', async (req, res) => {
+  const entries = unwrap(
+    await supabaseAdmin
+      .from('diary_entries')
+      .select('week_number, entry_date, status, submitted_at, word_count, content')
+      .eq('student_id', req.student.id)
+      .order('week_number')
+  );
+
+  const header = ['Week', 'Entry Date', 'Status', 'Submitted Date', 'Word Count', 'Diary Entry'];
+  const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [header.map(escape).join(',')];
+  for (const e of entries) {
+    lines.push(
+      [e.week_number, e.entry_date, e.status, e.submitted_at ?? '', e.word_count, extractPlainText(e.content)]
+        .map(escape)
+        .join(',')
+    );
+  }
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="my-diary-${Date.now()}.csv"`);
+  res.send(lines.join('\r\n'));
+});

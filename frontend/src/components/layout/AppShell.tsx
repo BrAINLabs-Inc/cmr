@@ -30,13 +30,13 @@ export function AppShell() {
             <UserProfileDialog />
           </div>
         </header>
-        <main className="relative flex-1 overflow-hidden px-4 py-6 sm:px-6 sm:py-8">
-          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <main className="relative flex-1 overflow-hidden px-3 py-5 sm:px-6 sm:py-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 hidden sm:block">
             <div className="absolute -right-40 -top-24 aspect-square w-[32rem] rounded-full bg-primary/10 blur-3xl" />
             <div className="absolute -right-16 bottom-0 aspect-square w-[22rem] rounded-full bg-emerald-400/10 blur-3xl" />
             <div className="absolute inset-y-0 right-0 w-[36rem] [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:26px_26px] [mask-image:linear-gradient(to_left,black,transparent)] opacity-40" />
           </div>
-          <div className="relative w-full max-w-6xl">
+          <div className="relative mx-auto w-full max-w-6xl">
             <Outlet />
           </div>
         </main>

@@ -27,4 +27,5 @@ export const diaryContentSchema = z.object({
   content: tiptapDoc.refine((doc) => JSON.stringify(doc).length <= MAX_CONTENT_LENGTH, {
     message: 'Entry is too large',
   }),
+  researchOptOut: z.boolean().optional(),
 });

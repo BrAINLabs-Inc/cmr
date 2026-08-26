@@ -1,16 +1,14 @@
 import { useState, type ComponentType } from 'react'
-import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, BarChart3, CheckCircle2, Clock, Flower2, HeartHandshake, LayoutDashboard, TrendingUp, Users } from 'lucide-react'
+import { BarChart3, CheckCircle2, Clock, Flower2, HeartHandshake, LayoutDashboard, TrendingUp, Users } from 'lucide-react'
 import { api } from '@/lib/api'
-import type { CheckinCohortStats, MoodFeeling, WeeklyStats } from '@/lib/types'
+import type { Admin, CheckinCohortStats, MoodFeeling, WeeklyStats } from '@/lib/types'
+import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
-import { MOOD_LABELS } from '@/lib/mood'
+import { MOOD_LABELS, moodClassName, moodIcon } from '@/lib/mood'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
 
 type CourseSettings = {
   total_weeks: number
@@ -37,7 +35,7 @@ function StatCard({
   return (
     <Card>
       <CardContent className="flex items-center gap-4 pt-6">
-        <div className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${accent}`}>
+        <div className={cn('flex size-12 shrink-0 items-center justify-center rounded-xl', accent)}>
           <Icon className="size-5" />
         </div>
         <div>
@@ -112,6 +110,8 @@ function WeeklyTrendChart({ overview }: { overview: StatsOverview }) {
 }
 
 export function AdminDashboardPage() {
+  const { profile } = useAuth()
+  const admin = profile as Admin
   const [week, setWeek] = useState<number | null>(null)
 
   const { data: settings } = useQuery({
@@ -142,7 +142,9 @@ export function AdminDashboardPage() {
         <div className="flex items-center gap-2">
           <LayoutDashboard className="size-5 text-primary" />
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Admin Dashboard</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Welcome back{admin?.name ? `, ${admin.name.split(' ')[0]}` : ''}
+            </h1>
             <p className="text-sm text-muted-foreground">
               Submission overview across the cohort
               {settings?.settings.intake_label ? ` (${settings.settings.intake_label})` : ''}.
@@ -201,18 +203,6 @@ export function AdminDashboardPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Week {stats.week} progress</CardTitle>
-              <CardDescription>
-                {stats.submitted} of {stats.totalStudents} students have submitted so far.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Progress value={stats.submissionRate} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
                 <BarChart3 className="size-4 text-primary" />
                 <CardTitle className="text-base">Submission rate by week</CardTitle>
@@ -230,17 +220,9 @@ export function AdminDashboardPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <HeartHandshake className="size-4 text-primary" />
-                  <CardTitle className="text-base">Cohort Well-being</CardTitle>
-                </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/admin/checkins">
-                    View all check-ins
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
+              <div className="flex items-center gap-2">
+                <HeartHandshake className="size-4 text-primary" />
+                <CardTitle className="text-base">Cohort Well-being</CardTitle>
               </div>
               <CardDescription>Optional weekly check-ins: meditation and mood, cohort-wide.</CardDescription>
             </CardHeader>
@@ -267,12 +249,18 @@ export function AdminDashboardPage() {
                     <p className="mt-0.5 text-xs text-muted-foreground">Meditated this week</p>
                   </div>
                   <div className="rounded-lg border bg-muted/30 px-4 py-3">
-                    <p className="text-xl font-semibold">
-                      {(() => {
-                        const top = Object.entries(checkinStats.moodCounts).sort((a, b) => b[1] - a[1])[0]
-                        return top && top[1] > 0 ? MOOD_LABELS[top[0] as MoodFeeling] : '-'
-                      })()}
-                    </p>
+                    {(() => {
+                      const top = Object.entries(checkinStats.moodCounts).sort((a, b) => b[1] - a[1])[0]
+                      if (!top || top[1] === 0) return <p className="text-xl font-semibold">-</p>
+                      const feeling = top[0] as MoodFeeling
+                      const MoodIcon = moodIcon(feeling)
+                      return (
+                        <p className="flex items-center gap-1.5 text-xl font-semibold">
+                          <MoodIcon className={cn('size-5', moodClassName(feeling))} />
+                          {MOOD_LABELS[feeling]}
+                        </p>
+                      )
+                    })()}
                     <p className="mt-0.5 text-xs text-muted-foreground">Most common mood</p>
                   </div>
                 </div>

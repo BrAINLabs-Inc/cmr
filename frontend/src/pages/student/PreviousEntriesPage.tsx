@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2, History, PencilLine } from 'lucide-react'
-import { api } from '@/lib/api'
+import { toast } from 'sonner'
+import { AlertTriangle, CheckCircle2, Download, History, PencilLine } from 'lucide-react'
+import { api, ApiError, downloadExport } from '@/lib/api'
 import type { WeeksResponse } from '@/lib/types'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -17,14 +18,29 @@ export function PreviousEntriesPage() {
 
   const openWeeks = data?.weeks.filter((w) => w.isOpen) ?? []
 
+  async function handleDownload() {
+    try {
+      await downloadExport('/diary/export/csv', `my-diary-${Date.now()}.csv`)
+      toast.success('Download started')
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Download failed')
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <History className="size-5 text-primary" />
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Previous Entries</h1>
-          <p className="text-sm text-muted-foreground">Every week you've written or been asked to write.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <History className="size-5 text-primary" />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Previous Entries</h1>
+            <p className="text-sm text-muted-foreground">Every week you've written or been asked to write.</p>
+          </div>
         </div>
+        <Button variant="outline" onClick={handleDownload}>
+          <Download className="size-4" />
+          Download my diary
+        </Button>
       </div>
 
       <Card>

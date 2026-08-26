@@ -87,7 +87,7 @@ adminRouter.patch(
 );
 
 const ENTRY_METADATA_COLUMNS =
-  'id, student_id, week_number, entry_date, word_count, status, submitted_at, updated_at, student:students(id, name, email, student_number)';
+  'id, student_id, week_number, entry_date, word_count, status, submitted_at, updated_at, research_opt_out, student:students(id, name, email, student_number)';
 
 async function findStudentIdsMatching(q) {
   if (!q) return null;
@@ -263,7 +263,7 @@ adminRouter.get('/students/:id/pending-weeks', validate(idParamSchema, 'params')
 });
 
 function toCsv(rows) {
-  const header = ['Student Number', 'Name', 'Email', 'Week', 'Entry Date', 'Status', 'Submitted Date', 'Word Count', 'Diary Entry'];
+  const header = ['Student Number', 'Name', 'Email', 'Week', 'Entry Date', 'Status', 'Submitted Date', 'Word Count', 'Research Opt-Out', 'Diary Entry'];
   const escape = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const lines = [header.map(escape).join(',')];
 
@@ -278,6 +278,7 @@ function toCsv(rows) {
         row.status,
         row.submitted_at ?? '',
         row.word_count,
+        row.research_opt_out ? 'Yes' : 'No',
         extractPlainText(row.content),
       ]
         .map(escape)
@@ -306,6 +307,7 @@ adminRouter.get('/export.csv', validate(exportQuerySchema, 'query'), async (req,
   if (week) query = query.eq('week_number', week);
   if (status) query = query.eq('status', status);
   if (matchingIds) query = query.in('student_id', matchingIds);
+  if (deidentified) query = query.eq('research_opt_out', false);
 
   const data = unwrap(await query);
 

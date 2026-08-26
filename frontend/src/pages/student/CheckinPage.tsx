@@ -68,14 +68,21 @@ function PastCheckinDialog({
 
   return (
     <Dialog open={week !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[85vh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Week {week} Check-in</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <HeartHandshake className="size-4 text-primary" />
+            Week {week} Check-in
+          </DialogTitle>
         </DialogHeader>
         {data ? (
-          <WeeklyCheckin value={data.checkin} onChange={() => {}} disabled alwaysOpen />
+          <WeeklyCheckin value={data.checkin} onChange={() => {}} disabled />
         ) : (
-          <Skeleton className="h-64 w-full" />
+          <div className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
         )}
       </DialogContent>
     </Dialog>
@@ -132,7 +139,7 @@ export function CheckinPage() {
   const pastWeeks = (weeksData?.weeks ?? []).filter((w) => !w.isCurrent)
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+    <div className="space-y-6">
       <div className="flex items-center gap-2">
         <HeartHandshake className="size-5 text-primary" />
         <div>
@@ -161,7 +168,7 @@ export function CheckinPage() {
             </span>
           </div>
 
-          <WeeklyCheckin value={checkin} onChange={handleChange} alwaysOpen />
+          <WeeklyCheckin value={checkin} onChange={handleChange} />
 
           <div className="flex justify-end">
             <Button onClick={() => save(checkin, false)} disabled={saving}>

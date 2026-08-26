@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CalendarRange, CheckCircle2 } from 'lucide-react'
+import { AlertTriangle, CalendarClock, CalendarRange, GraduationCap, Hourglass } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,10 +16,16 @@ type CourseSettings = {
   intake_label: string | null
 }
 
-const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+const MS_PER_WEEK = 7 * MS_PER_DAY
 
 function formatDate(value: string) {
   return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'long' })
+}
+
+function daysUntil(value: string) {
+  const target = new Date(`${value}T23:59:59`).getTime()
+  return Math.ceil((target - Date.now()) / MS_PER_DAY)
 }
 
 export function AdminSettingsPage() {
@@ -67,6 +73,8 @@ export function AdminSettingsPage() {
     }
   }
 
+  const remaining = data?.settings ? daysUntil(data.settings.course_end_date) : null
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -74,39 +82,82 @@ export function AdminSettingsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Course Settings</h1>
           <p className="text-sm text-muted-foreground">
-            Set the current intake's start and end dates. Weekly diary periods are calculated from them
-            automatically. When this intake finishes, come back and roll the dates forward to open the next one.
+            Set the current intake's start and end dates. Weekly diary periods are calculated automatically.
           </p>
         </div>
       </div>
 
       {isLoading ? (
-        <Skeleton className="h-80 w-full max-w-xl" />
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-96 w-full" />
+        </div>
       ) : (
-        <>
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start">
           {data?.settings && (
-            <Card className="max-w-xl border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/20">
-              <CardContent className="flex items-start gap-3 pt-6">
-                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <div>
-                  <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
-                    Currently configured{data.settings.intake_label ? `: ${data.settings.intake_label}` : ''}
-                  </p>
-                  <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
-                    {formatDate(data.settings.course_start_date)} – {formatDate(data.settings.course_end_date)} ·{' '}
-                    {data.settings.total_weeks} week{data.settings.total_weeks === 1 ? '' : 's'}
-                  </p>
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="space-y-5 pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <GraduationCap className="size-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">Current intake</p>
+                    <p className="truncate text-lg font-semibold">{data.settings.intake_label || 'Unlabeled'}</p>
+                  </div>
                 </div>
+
+                <div className="space-y-2.5 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Start</span>
+                    <span className="font-medium">{formatDate(data.settings.course_start_date)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">End</span>
+                    <span className="font-medium">{formatDate(data.settings.course_end_date)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Duration</span>
+                    <span className="font-medium">
+                      {data.settings.total_weeks} week{data.settings.total_weeks === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Hourglass className="size-3.5" />
+                      Time remaining
+                    </span>
+                    <span className="font-medium">
+                      {remaining !== null && remaining > 0 ? `${remaining} days` : 'Ended'}
+                    </span>
+                  </div>
+                </div>
+
+                {remaining !== null && remaining <= 14 && remaining > 0 && (
+                  <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-400">
+                    <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                    <span>This intake wraps up soon. Come back to open the next one when it does.</span>
+                  </div>
+                )}
+                {remaining !== null && remaining <= 0 && (
+                  <div className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+                    <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                    <span>This intake has ended. Update the dates below to open the next one.</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
 
-          <Card className="max-w-xl">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base">Course Duration</CardTitle>
+              <div className="flex items-center gap-2">
+                <CalendarClock className="size-4 text-primary" />
+                <CardTitle className="text-base">Course Duration</CardTitle>
+              </div>
               <CardDescription>
-                Each diary week runs 7 days from the start date. The total number of weeks is derived from these two
-                dates. Students can never write beyond today's week or past the end date.
+                Each diary week runs 7 days from the start date. The total number of weeks is derived from these
+                two dates. Students can never write beyond today's week or past the end date.
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
@@ -166,7 +217,7 @@ export function AdminSettingsPage() {
               </CardFooter>
             </form>
           </Card>
-        </>
+        </div>
       )}
     </div>
   )
