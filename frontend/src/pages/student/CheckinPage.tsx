@@ -109,6 +109,7 @@ export function CheckinPage() {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const [viewingWeek, setViewingWeek] = useState<number | null>(null)
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveSeq = useRef(0)
 
   useEffect(() => {
     if (currentData) setCheckin(currentData.checkin)
@@ -116,10 +117,19 @@ export function CheckinPage() {
 
   async function save(next: DiaryCheckin, silent: boolean) {
     if (!currentWeek) return
+    const seq = ++saveSeq.current
     setSaving(true)
     try {
-      await api.put(`/checkin/${currentWeek}`, { checkin: next })
+      const saved = await api.put<{ checkin: DiaryCheckin; updatedAt: string | null }>(
+        `/checkin/${currentWeek}`,
+        { checkin: next }
+      )
       setLastSavedAt(new Date())
+      if (seq === saveSeq.current) {
+        queryClient.setQueryData<CheckinResponse>(['checkin', currentWeek], (old) =>
+          old ? { ...old, checkin: saved.checkin, updatedAt: saved.updatedAt } : old
+        )
+      }
       queryClient.invalidateQueries({ queryKey: ['checkin-weeks'] })
       queryClient.invalidateQueries({ queryKey: ['checkin-stats'] })
       if (!silent) toast.success('Check-in saved')

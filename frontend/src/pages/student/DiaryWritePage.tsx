@@ -42,6 +42,7 @@ export function DiaryWritePage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveSeq = useRef(0)
 
   useEffect(() => {
     if (loadedEntry) {
@@ -52,13 +53,22 @@ export function DiaryWritePage() {
 
   async function saveDraft(silent = false, optOutOverride?: boolean) {
     if (!week || readOnly) return
+    const seq = ++saveSeq.current
     setSaving(true)
     try {
-      await api.put(`/diary/${week}`, {
+      const { entry } = await api.put<{ entry: DiaryEntry }>(`/diary/${week}`, {
         content: latestContent.current,
         researchOptOut: optOutOverride ?? researchOptOut,
       })
       setLastSavedAt(new Date())
+      // Only the most recently *sent* save is allowed to update the cached
+      // entry, so an older in-flight request that resolves late can't
+      // clobber newer content with a stale response.
+      if (seq === saveSeq.current) {
+        queryClient.setQueryData<{ entry: DiaryEntry; currentWeek: number }>(['diary', week], (old) =>
+          old ? { ...old, entry } : old
+        )
+      }
       queryClient.invalidateQueries({ queryKey: ['weeks'] })
       if (!silent) toast.success('Draft saved')
     } catch (err) {
@@ -91,7 +101,13 @@ export function DiaryWritePage() {
     }
     setSubmitting(true)
     try {
-      await api.post(`/diary/${week}/submit`, { content: latestContent.current, researchOptOut })
+      const { entry } = await api.post<{ entry: DiaryEntry }>(`/diary/${week}/submit`, {
+        content: latestContent.current,
+        researchOptOut,
+      })
+      queryClient.setQueryData<{ entry: DiaryEntry; currentWeek: number }>(['diary', week], (old) =>
+        old ? { ...old, entry } : old
+      )
       toast.success('Diary submitted')
       queryClient.invalidateQueries({ queryKey: ['weeks'] })
       navigate('/previous')
@@ -109,6 +125,7 @@ export function DiaryWritePage() {
       await api.delete(`/diary/${week}`)
       toast.success('Draft deleted')
       queryClient.invalidateQueries({ queryKey: ['weeks'] })
+      queryClient.invalidateQueries({ queryKey: ['diary', week] })
       navigate('/dashboard')
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : 'Could not delete draft')

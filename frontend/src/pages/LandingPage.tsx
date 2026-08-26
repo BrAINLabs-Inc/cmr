@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import {
@@ -29,6 +29,7 @@ import {
   Wind,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -107,6 +108,28 @@ function SectionHeading({ eyebrow, title, description }: { eyebrow?: string; tit
   )
 }
 
+function WaveDivider({ flip }: { flip?: boolean }) {
+  return (
+    <div aria-hidden className={cn('relative h-12 w-full overflow-hidden bg-background sm:h-16', flip && 'bg-muted')}>
+      <svg
+        viewBox="0 0 1440 100"
+        preserveAspectRatio="none"
+        className={cn('absolute inset-0 h-full w-full text-muted', flip && 'text-background')}
+      >
+        <path d="M0,40 C280,95 520,10 760,35 C1020,62 1200,12 1440,45 L1440,100 L0,100 Z" fill="currentColor" />
+      </svg>
+    </div>
+  )
+}
+
+function HoverCard({ className, children }: { className?: string; children: ReactNode }) {
+  return (
+    <Card className={cn('transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/5', className)}>
+      {children}
+    </Card>
+  )
+}
+
 export function LandingPage() {
   const { loading, session, role } = useAuth()
 
@@ -116,7 +139,7 @@ export function LandingPage() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      <header className="border-b">
+      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <img src={cmrLogo} alt="Centre for Meditation Research" className="size-8 rounded-full" />
@@ -158,6 +181,14 @@ export function LandingPage() {
 
               <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Certificate Course</p>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-5xl">{COURSE_TITLE}</h1>
+              <svg
+                aria-hidden
+                viewBox="0 0 200 12"
+                className="mx-auto mt-3 h-3 w-40 text-primary/40 lg:mx-0"
+                preserveAspectRatio="none"
+              >
+                <path d="M2,8 C40,0 70,10 100,6 C130,2 160,10 198,4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
               <p className="mx-auto mt-5 max-w-2xl text-balance text-muted-foreground sm:text-lg lg:mx-0">
                 Centre for Meditation Research · Faculty of Medicine · University of Colombo
               </p>
@@ -208,19 +239,23 @@ export function LandingPage() {
           <div className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {FACTS.map((fact) => (
-                <Card key={fact.label}>
-                  <CardContent className="flex flex-col items-center gap-2 pt-6 text-center">
-                    <fact.icon className="size-5 text-primary" />
+                <HoverCard key={fact.label}>
+                  <CardContent className="flex flex-col items-center gap-2.5 pt-6 text-center">
+                    <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <fact.icon className="size-5" />
+                    </div>
                     <p className="text-sm font-medium">{fact.value}</p>
                     <p className="text-xs text-muted-foreground">{fact.label}</p>
                   </CardContent>
-                </Card>
+                </HoverCard>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="border-t bg-muted/30 py-20">
+        <WaveDivider flip />
+
+        <section className="bg-muted py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading eyebrow="Curriculum" title="Course Modules" description="The course comprises six modules." />
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -228,34 +263,39 @@ export function LandingPage() {
                 const icons = [Heart, Sparkles, Brain, Palette, GraduationCap, Scale]
                 const Icon = icons[i] ?? BadgeCheck
                 return (
-                  <Card key={module}>
+                  <HoverCard key={module} className="relative overflow-visible">
+                    <div className="absolute -top-3 -left-3 flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground shadow-sm">
+                      {i + 1}
+                    </div>
                     <CardContent className="flex gap-4 pt-6">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                         <Icon className="size-5" />
                       </div>
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground">Module {i + 1}</p>
-                        <p className="mt-0.5 font-medium">{module}</p>
-                      </div>
+                      <p className="font-medium">{module}</p>
                     </CardContent>
-                  </Card>
+                  </HoverCard>
                 )
               })}
             </div>
           </div>
         </section>
 
+        <WaveDivider />
+
         <section className="py-20">
           <div className="mx-auto max-w-3xl px-4 sm:px-6">
             <SectionHeading eyebrow="Why this course" title="General Objectives" />
-            <ul className="mt-10 space-y-4">
+            <div className="relative mt-10 space-y-6 pl-2">
+              <div aria-hidden className="absolute top-1 bottom-1 left-[15px] w-px bg-border" />
               {OBJECTIVES.map((objective) => (
-                <li key={objective} className="flex gap-3">
-                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
-                  <span className="text-muted-foreground">{objective}</span>
-                </li>
+                <div key={objective} className="relative flex gap-4">
+                  <div className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-primary bg-background text-primary">
+                    <CheckCircle2 className="size-4" />
+                  </div>
+                  <span className="pt-1 text-muted-foreground">{objective}</span>
+                </div>
               ))}
-            </ul>
+            </div>
             <p className="mt-8 text-sm text-muted-foreground">
               Successful participants will develop skills, attitudes and attributes to enhance their efficiency,
               productivity and cohesiveness. The knowledge and skills will contribute to their sustainability in the
@@ -265,9 +305,11 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t bg-muted/30 py-20">
+        <WaveDivider flip />
+
+        <section className="bg-muted py-20">
           <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-2">
-            <Card>
+            <HoverCard>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
                   <GraduationCap className="size-5 text-primary" />
@@ -285,9 +327,9 @@ export function LandingPage() {
                   </p>
                 </div>
               </CardContent>
-            </Card>
+            </HoverCard>
 
-            <Card>
+            <HoverCard>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
                   <Clock className="size-5 text-primary" />
@@ -304,15 +346,17 @@ export function LandingPage() {
                   <span>Commencing <span className="font-medium text-foreground">11th July 2026</span></span>
                 </div>
               </CardContent>
-            </Card>
+            </HoverCard>
           </div>
         </section>
+
+        <WaveDivider />
 
         <section className="py-20">
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <SectionHeading eyebrow="Cost" title="Fees" />
             <div className="mt-12 grid gap-4 sm:grid-cols-3">
-              <Card className="border-primary/30 bg-primary/5">
+              <HoverCard className="border-primary/30 bg-primary/5">
                 <CardContent className="pt-6">
                   <Wallet className="size-5 text-primary" />
                   <p className="mt-3 font-medium">Course Fee</p>
@@ -321,8 +365,8 @@ export function LandingPage() {
                     LKR 50,000 sponsored per participant by the Rekhi Foundation.
                   </p>
                 </CardContent>
-              </Card>
-              <Card>
+              </HoverCard>
+              <HoverCard>
                 <CardContent className="pt-6">
                   <Wallet className="size-5 text-primary" />
                   <p className="mt-3 font-medium">Application Fee</p>
@@ -330,20 +374,22 @@ export function LandingPage() {
                   <p className="text-sm text-muted-foreground">Foreigners: USD 5</p>
                   <p className="mt-2 text-xs text-muted-foreground">Non-refundable</p>
                 </CardContent>
-              </Card>
-              <Card>
+              </HoverCard>
+              <HoverCard>
                 <CardContent className="pt-6">
                   <Wallet className="size-5 text-primary" />
                   <p className="mt-3 font-medium">Registration Fee</p>
                   <p className="mt-1 text-sm text-muted-foreground">Locals: LKR 10,000</p>
                   <p className="text-sm text-muted-foreground">Foreigners: USD 50</p>
                 </CardContent>
-              </Card>
+              </HoverCard>
             </div>
           </div>
         </section>
 
-        <section className="border-t bg-muted/30 py-20">
+        <WaveDivider flip />
+
+        <section className="bg-muted py-20">
           <div className="mx-auto max-w-5xl px-4 sm:px-6">
             <SectionHeading eyebrow="Applications open" title="How to Apply" />
             <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_auto]">
@@ -360,7 +406,7 @@ export function LandingPage() {
                   </div>
                 ))}
                 <div className="flex gap-4">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-muted-foreground">
                     <Award className="size-4" />
                   </div>
                   <div>
@@ -390,6 +436,8 @@ export function LandingPage() {
           </div>
         </section>
 
+        <WaveDivider />
+
         <section className="py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading
@@ -399,7 +447,7 @@ export function LandingPage() {
             />
             <div className="mt-12 grid gap-4 sm:grid-cols-2">
               {FEATURES.map((feature) => (
-                <Card key={feature.title}>
+                <HoverCard key={feature.title}>
                   <CardContent className="flex gap-4 pt-6">
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <feature.icon className="size-5" />
@@ -409,7 +457,7 @@ export function LandingPage() {
                       <p className="mt-1 text-sm text-muted-foreground">{feature.description}</p>
                     </div>
                   </CardContent>
-                </Card>
+                </HoverCard>
               ))}
             </div>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -429,11 +477,29 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t py-16">
+        <section className="relative overflow-hidden border-t py-16">
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex justify-center">
+            <div className="aspect-square w-[28rem] rounded-full bg-primary/10 blur-3xl" />
+          </div>
           <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <ShieldCheck className="size-6" />
-            </div>
+            <svg viewBox="0 0 64 64" className="mx-auto size-14 text-primary" aria-hidden>
+              <circle cx="32" cy="32" r="30" fill="currentColor" opacity="0.1" />
+              <path
+                d="M32 14 L47 21 V31 C47 40 40.5 47.5 32 50 C23.5 47.5 17 40 17 31 V21 Z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M25 31.5 L30 36.5 L39.5 26.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             <h2 className="mt-5 text-2xl font-semibold tracking-tight">Your entries are confidential</h2>
             <p className="mt-3 text-muted-foreground">
               Diary entries are only accessible to you and authorized CMR administrators or research personnel,
@@ -443,7 +509,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t bg-muted/30 py-12">
+      <footer className="border-t bg-muted py-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
             <div>
