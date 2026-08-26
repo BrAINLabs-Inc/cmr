@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Info } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { api, ApiError } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,9 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BrandMark } from '@/components/BrandMark'
+import { AuthLayout } from '@/components/AuthLayout'
+
+const SIGNUP_ILLUSTRATION = '/vectors/signup.webp'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -25,7 +29,7 @@ export function RegisterPage() {
       await api.post('/auth/register', { email, studentNumber, password })
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) throw signInError
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Registration failed')
     } finally {
@@ -34,58 +38,66 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-muted/30 px-4">
-      <div className="w-full max-w-sm">
-        <BrandMark />
-        <Card>
-          <CardHeader>
-            <CardTitle>Create your account</CardTitle>
-            <CardDescription>Use the email and student ID CMR has on record for you.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="studentNumber">Student ID</Label>
-                <Input
-                  id="studentNumber"
-                  required
-                  value={studentNumber}
-                  onChange={(e) => setStudentNumber(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  minLength={8}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? 'Creating account…' : 'Create account'}
-              </Button>
-            </form>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              Already registered?{' '}
-              <Link to="/login" className="underline underline-offset-4">
-                Sign in
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <AuthLayout
+      illustration={SIGNUP_ILLUSTRATION}
+      eyebrow="Join the programme"
+      title="Start your weekly diary"
+      description="Create your account with the email and student ID CMR has on record for you."
+      reverse
+    >
+      <BrandMark />
+      <Card>
+        <CardHeader>
+          <CardTitle>Create your account</CardTitle>
+          <CardDescription>Use the email and student ID CMR has on record for you.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-primary/15 bg-primary/5 px-3.5 py-3 text-sm text-primary">
+            <Info className="mt-0.5 size-4 shrink-0" />
+            <p>This registration is only for students already enrolled in the CMR certificate course.</p>
+          </div>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="studentNumber">Student ID</Label>
+              <Input
+                id="studentNumber"
+                required
+                value={studentNumber}
+                onChange={(e) => setStudentNumber(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? 'Creating account…' : 'Create account'}
+            </Button>
+          </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Already registered?{' '}
+            <Link to="/login" className="underline underline-offset-4">
+              Sign in
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </AuthLayout>
   )
 }

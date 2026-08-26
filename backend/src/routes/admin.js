@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { currentWeekNumber } from '../utils/weeks.js';
+import { currentWeekNumber, extractPlainText } from '../utils/weeks.js';
+import { escapeLikeValue } from '../utils/text.js';
 import { unwrap } from '../utils/db.js';
 import { AppError } from '../utils/AppError.js';
 import {
@@ -14,43 +15,35 @@ import {
   listEntriesQuerySchema,
   exportQuerySchema,
   weeklyStatsQuerySchema,
+  listCheckinsQuerySchema,
   courseSettingsPatchSchema,
 } from '../schemas/admin.schema.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
 
-// A course cohort is at most a few hundred students; capping the roster
-// read at 5000 is a safety net against unbounded queries, not a real limit.
 const ROSTER_SAFETY_CAP = 5000;
 
-// ---------------------------------------------------------------------------
-// Students
-// ---------------------------------------------------------------------------
+function nameEmailIdSearchFilter(q) {
+  const safe = escapeLikeValue(q.replace(/[,()]/g, ' ').trim());
+  const needle = `%${safe}%`;
+  return `name.ilike.${needle},email.ilike.${needle},student_number.ilike.${needle}`;
+}
 
 adminRouter.get('/students', validate(listStudentsQuerySchema, 'query'), async (req, res) => {
   const { q, status, page, pageSize } = req.query;
 
-  let query = supabaseAdmin.from('students').select('*').order('name').limit(ROSTER_SAFETY_CAP);
+  let query = supabaseAdmin.from('students').select('*', { count: 'exact' }).order('name');
   if (status) query = query.eq('status', status);
+  if (q) query = query.or(nameEmailIdSearchFilter(q));
 
-  let students = unwrap(await query);
-
-  if (q) {
-    const needle = q.toLowerCase();
-    students = students.filter(
-      (s) =>
-        s.name.toLowerCase().includes(needle) ||
-        s.email.toLowerCase().includes(needle) ||
-        s.student_number.toLowerCase().includes(needle)
-    );
-  }
-
-  const total = students.length;
   const start = (page - 1) * pageSize;
-  const page_ = students.slice(start, start + pageSize);
+  query = query.range(start, start + pageSize - 1);
 
-  res.json({ students: page_, total, page, pageSize });
+  const { data, error, count } = await query;
+  if (error) throw new AppError(500, error.message);
+
+  res.json({ students: data, total: count ?? data.length, page, pageSize });
 });
 
 adminRouter.post('/students', validate(createStudentSchema), async (req, res) => {
@@ -93,21 +86,32 @@ adminRouter.patch(
   }
 );
 
-// ---------------------------------------------------------------------------
-// Diary entries
-// ---------------------------------------------------------------------------
+const ENTRY_METADATA_COLUMNS =
+  'id, student_id, week_number, entry_date, word_count, status, submitted_at, updated_at, student:students(id, name, email, student_number)';
+
+async function findStudentIdsMatching(q) {
+  if (!q) return null;
+  const matches = unwrap(await supabaseAdmin.from('students').select('id').or(nameEmailIdSearchFilter(q)));
+  return matches.map((s) => s.id);
+}
 
 adminRouter.get('/entries', validate(listEntriesQuerySchema, 'query'), async (req, res) => {
-  const { week, status, studentId, page, pageSize } = req.query;
+  const { week, status, studentId, q, page, pageSize } = req.query;
+
+  const matchingIds = await findStudentIdsMatching(q);
+  if (matchingIds && matchingIds.length === 0) {
+    return res.json({ entries: [], total: 0, page, pageSize });
+  }
 
   let query = supabaseAdmin
     .from('diary_entries')
-    .select('*, student:students(id, name, email, student_number)', { count: 'exact' })
+    .select(ENTRY_METADATA_COLUMNS, { count: 'exact' })
     .order('week_number', { ascending: false });
 
   if (week) query = query.eq('week_number', week);
   if (status) query = query.eq('status', status);
   if (studentId) query = query.eq('student_id', studentId);
+  if (matchingIds) query = query.in('student_id', matchingIds);
 
   const start = (page - 1) * pageSize;
   query = query.range(start, start + pageSize - 1);
@@ -120,19 +124,49 @@ adminRouter.get('/entries', validate(listEntriesQuerySchema, 'query'), async (re
 
 adminRouter.get('/entries/:id', validate(idParamSchema, 'params'), async (req, res) => {
   const entry = unwrap(
-    await supabaseAdmin
-      .from('diary_entries')
-      .select('*, student:students(id, name, email, student_number)')
-      .eq('id', req.params.id)
-      .single(),
+    await supabaseAdmin.from('diary_entries').select(ENTRY_METADATA_COLUMNS).eq('id', req.params.id).single(),
     'Entry not found'
   );
   res.json({ entry });
 });
 
-// ---------------------------------------------------------------------------
-// Stats
-// ---------------------------------------------------------------------------
+const CHECKIN_COLUMNS = 'id, student_id, week_number, checkin, created_at, updated_at, student:students(id, name, email, student_number)';
+
+adminRouter.get('/checkins', validate(listCheckinsQuerySchema, 'query'), async (req, res) => {
+  const { week, q, page, pageSize } = req.query;
+
+  const matchingIds = await findStudentIdsMatching(q);
+  if (matchingIds && matchingIds.length === 0) {
+    return res.json({ checkins: [], total: 0, page, pageSize });
+  }
+
+  let query = supabaseAdmin
+    .from('weekly_checkins')
+    .select(CHECKIN_COLUMNS, { count: 'exact' })
+    .order('week_number', { ascending: false });
+
+  if (week) query = query.eq('week_number', week);
+  if (matchingIds) query = query.in('student_id', matchingIds);
+
+  const start = (page - 1) * pageSize;
+  query = query.range(start, start + pageSize - 1);
+
+  const { data, error, count } = await query;
+  if (error) throw new AppError(500, error.message);
+
+  res.json({ checkins: data, total: count ?? data.length, page, pageSize });
+});
+
+adminRouter.get('/students/:id/checkins', validate(idParamSchema, 'params'), async (req, res) => {
+  const checkins = unwrap(
+    await supabaseAdmin
+      .from('weekly_checkins')
+      .select('id, week_number, checkin, created_at, updated_at')
+      .eq('student_id', req.params.id)
+      .order('week_number', { ascending: false })
+  );
+  res.json({ checkins });
+});
 
 adminRouter.get('/stats/weekly', validate(weeklyStatsQuerySchema, 'query'), async (req, res) => {
   const settings = unwrap(await supabaseAdmin.from('course_settings').select('*').eq('id', 1).single());
@@ -149,6 +183,71 @@ adminRouter.get('/stats/weekly', validate(weeklyStatsQuerySchema, 'query'), asyn
   res.json({ week, totalStudents: totalStudents ?? 0, submitted: submitted ?? 0, pending, submissionRate: rate });
 });
 
+adminRouter.get('/stats/overview', async (req, res) => {
+  const settings = unwrap(await supabaseAdmin.from('course_settings').select('*').eq('id', 1).single());
+  const currentWeek = currentWeekNumber(settings);
+
+  const [studentsResult, entriesResult] = await Promise.all([
+    supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabaseAdmin.from('diary_entries').select('week_number, status').lte('week_number', currentWeek).eq('status', 'submitted'),
+  ]);
+  const totalStudents = studentsResult.count;
+  const entries = unwrap(entriesResult);
+
+  const submittedByWeek = new Map();
+  for (const e of entries) {
+    submittedByWeek.set(e.week_number, (submittedByWeek.get(e.week_number) ?? 0) + 1);
+  }
+
+  const weeks = Array.from({ length: currentWeek }, (_, i) => {
+    const week = i + 1;
+    const submitted = submittedByWeek.get(week) ?? 0;
+    return {
+      week,
+      submitted,
+      submissionRate: totalStudents ? Math.round((submitted / totalStudents) * 100) : 0,
+    };
+  });
+
+  res.json({ currentWeek, totalStudents: totalStudents ?? 0, weeks });
+});
+
+adminRouter.get('/stats/checkins', async (req, res) => {
+  const settings = unwrap(await supabaseAdmin.from('course_settings').select('*').eq('id', 1).single());
+  const week = currentWeekNumber(settings);
+
+  const [studentsResult, checkinsResult] = await Promise.all([
+    supabaseAdmin.from('students').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabaseAdmin.from('weekly_checkins').select('checkin').eq('week_number', week),
+  ]);
+  const totalStudents = studentsResult.count ?? 0;
+  const checkins = unwrap(checkinsResult);
+
+  const moodCounts = { very_good: 0, good: 0, okay: 0, not_great: 0, difficult: 0 };
+  let meditated = 0;
+  let loggedAny = 0;
+
+  for (const row of checkins) {
+    const c = row.checkin ?? {};
+    const hasData = Boolean(
+      c.meditation?.practiced !== undefined || c.mood?.feeling || c.gratitude?.some((g) => g?.trim()) || c.noticed?.trim() || c.goal?.intention?.trim()
+    );
+    if (hasData) loggedAny += 1;
+    if (c.meditation?.practiced) meditated += 1;
+    if (c.mood?.feeling && c.mood.feeling in moodCounts) moodCounts[c.mood.feeling] += 1;
+  }
+
+  res.json({
+    week,
+    totalStudents,
+    checkedIn: loggedAny,
+    meditated,
+    checkinRate: totalStudents ? Math.round((loggedAny / totalStudents) * 100) : 0,
+    meditationRate: totalStudents ? Math.round((meditated / totalStudents) * 100) : 0,
+    moodCounts,
+  });
+});
+
 adminRouter.get('/students/:id/pending-weeks', validate(idParamSchema, 'params'), async (req, res) => {
   const settings = unwrap(await supabaseAdmin.from('course_settings').select('*').eq('id', 1).single());
   const current = currentWeekNumber(settings);
@@ -162,10 +261,6 @@ adminRouter.get('/students/:id/pending-weeks', validate(idParamSchema, 'params')
 
   res.json({ pendingWeeks });
 });
-
-// ---------------------------------------------------------------------------
-// Export
-// ---------------------------------------------------------------------------
 
 function toCsv(rows) {
   const header = ['Student Number', 'Name', 'Email', 'Week', 'Entry Date', 'Status', 'Submitted Date', 'Word Count', 'Diary Entry'];
@@ -183,7 +278,7 @@ function toCsv(rows) {
         row.status,
         row.submitted_at ?? '',
         row.word_count,
-        row.content,
+        extractPlainText(row.content),
       ]
         .map(escape)
         .join(',')
@@ -193,7 +288,14 @@ function toCsv(rows) {
 }
 
 adminRouter.get('/export.csv', validate(exportQuerySchema, 'query'), async (req, res) => {
-  const { week, status, deidentified } = req.query;
+  const { week, status, q, deidentified } = req.query;
+
+  const matchingIds = await findStudentIdsMatching(q);
+  if (matchingIds && matchingIds.length === 0) {
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="diary-entries-${Date.now()}.csv"`);
+    return res.send(toCsv([]));
+  }
 
   let query = supabaseAdmin
     .from('diary_entries')
@@ -203,6 +305,7 @@ adminRouter.get('/export.csv', validate(exportQuerySchema, 'query'), async (req,
 
   if (week) query = query.eq('week_number', week);
   if (status) query = query.eq('status', status);
+  if (matchingIds) query = query.in('student_id', matchingIds);
 
   const data = unwrap(await query);
 
@@ -219,20 +322,25 @@ adminRouter.get('/export.csv', validate(exportQuerySchema, 'query'), async (req,
   res.send(csv);
 });
 
-// ---------------------------------------------------------------------------
-// Course settings
-// ---------------------------------------------------------------------------
-
 adminRouter.get('/course-settings', async (req, res) => {
   const settings = unwrap(await supabaseAdmin.from('course_settings').select('*').eq('id', 1).single());
   res.json({ settings });
 });
 
 adminRouter.patch('/course-settings', validate(courseSettingsPatchSchema), async (req, res) => {
-  const { courseStartDate, totalWeeks } = req.body;
+  const { courseStartDate, courseEndDate, intakeLabel } = req.body;
+
+  const current = unwrap(await supabaseAdmin.from('course_settings').select('*').eq('id', 1).single());
+  const nextStart = courseStartDate ?? current.course_start_date;
+  const nextEnd = courseEndDate ?? current.course_end_date;
+  if (new Date(nextEnd) < new Date(nextStart)) {
+    throw new AppError(400, 'End date must be on or after the start date.');
+  }
+
   const patch = {};
   if (courseStartDate) patch.course_start_date = courseStartDate;
-  if (totalWeeks) patch.total_weeks = totalWeeks;
+  if (courseEndDate) patch.course_end_date = courseEndDate;
+  if (intakeLabel !== undefined) patch.intake_label = intakeLabel || null;
 
   const settings = unwrap(await supabaseAdmin.from('course_settings').update(patch).eq('id', 1).select('*').single());
   res.json({ settings });

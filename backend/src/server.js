@@ -15,7 +15,7 @@ function shutdown(signal) {
     }
     process.exit(0);
   });
-  // Don't hang forever waiting on slow/hung connections.
+
   setTimeout(() => process.exit(1), 10_000).unref();
 }
 

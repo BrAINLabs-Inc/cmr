@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, History, PencilLine } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, History, PencilLine } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { WeeksResponse } from '@/lib/types'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -52,13 +52,18 @@ export function PreviousEntriesPage() {
                   <TableRow key={w.weekNumber}>
                     <TableCell className="font-medium">Week {w.weekNumber}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {w.submittedAt ? new Date(w.submittedAt).toLocaleDateString() : '—'}
+                      {w.submittedAt ? new Date(w.submittedAt).toLocaleDateString() : '-'}
                     </TableCell>
                     <TableCell>
                       {w.status === 'submitted' ? (
                         <Badge className="gap-1">
                           <CheckCircle2 className="size-3.5" />
                           Submitted
+                        </Badge>
+                      ) : w.isLocked ? (
+                        <Badge variant="outline" className="gap-1 border-destructive/30 text-destructive">
+                          <AlertTriangle className="size-3.5" />
+                          Missed
                         </Badge>
                       ) : w.status === 'draft' ? (
                         <Badge variant="secondary" className="gap-1">
@@ -71,7 +76,9 @@ export function PreviousEntriesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/diary/${w.weekNumber}`}>{w.status === 'submitted' ? 'View' : 'Write'}</Link>
+                        <Link to={`/diary/${w.weekNumber}`}>
+                          {w.status === 'submitted' || w.isLocked ? 'View' : 'Write'}
+                        </Link>
                       </Button>
                     </TableCell>
                   </TableRow>

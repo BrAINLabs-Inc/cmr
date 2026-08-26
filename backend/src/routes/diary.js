@@ -3,18 +3,29 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { requireAuth, requireStudent } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { weekParamSchema, diaryContentSchema } from '../schemas/diary.schema.js';
-import { currentWeekNumber, wordCount } from '../utils/weeks.js';
+import { currentWeekNumber, wordCount, extractPlainText, weekDueDate } from '../utils/weeks.js';
 import { unwrap } from '../utils/db.js';
 import { AppError } from '../utils/AppError.js';
 
 export const diaryRouter = Router();
 diaryRouter.use(requireAuth, requireStudent);
 
-async function getCourseSettings() {
+const EMPTY_DOC = { type: 'doc', content: [] };
+
+export async function getCourseSettings() {
   return unwrap(await supabaseAdmin.from('course_settings').select('*').eq('id', 1).single());
 }
 
-// GET /api/diary/weeks — dashboard + previous-entries list
+export function assertWeekIsOpen(week, currentWeek) {
+  if (week === currentWeek) return;
+  throw new AppError(
+    403,
+    week < currentWeek
+      ? 'The deadline for this week has passed. It can no longer be edited or submitted.'
+      : 'This week has not opened yet.'
+  );
+}
+
 diaryRouter.get('/weeks', async (req, res) => {
   const settings = await getCourseSettings();
   const current = currentWeekNumber(settings);
@@ -30,21 +41,26 @@ diaryRouter.get('/weeks', async (req, res) => {
   const weeks = Array.from({ length: settings.total_weeks }, (_, i) => {
     const weekNumber = i + 1;
     const entry = byWeek.get(weekNumber);
+    const status = entry?.status ?? 'not_started';
     return {
       weekNumber,
-      status: entry?.status ?? 'not_started',
+      status,
       submittedAt: entry?.submitted_at ?? null,
       isCurrent: weekNumber === current,
       isOpen: weekNumber <= current,
+
+      isLocked: weekNumber < current && status !== 'submitted',
+      dueDate: weekDueDate(settings.course_start_date, weekNumber),
     };
   });
 
   res.json({ currentWeek: current, totalWeeks: settings.total_weeks, weeks });
 });
 
-// GET /api/diary/:week — fetch (or lazily initialize) one week's entry
 diaryRouter.get('/:week', validate(weekParamSchema, 'params'), async (req, res) => {
   const { week } = req.params;
+  const settings = await getCourseSettings();
+  const currentWeek = currentWeekNumber(settings);
 
   const entry = unwrap(
     await supabaseAdmin
@@ -55,18 +71,19 @@ diaryRouter.get('/:week', validate(weekParamSchema, 'params'), async (req, res) 
       .maybeSingle()
   );
 
-  if (entry) return res.json({ entry });
+  if (entry) return res.json({ entry, currentWeek });
 
   res.json({
     entry: {
       student_id: req.student.id,
       week_number: week,
       entry_date: new Date().toISOString().slice(0, 10),
-      content: '',
+      content: EMPTY_DOC,
       word_count: 0,
       status: 'draft',
       submitted_at: null,
     },
+    currentWeek,
   });
 });
 
@@ -76,7 +93,7 @@ async function upsertEntry({ studentId, week, content, status }) {
     student_id: studentId,
     week_number: week,
     content,
-    word_count: wordCount(content),
+    word_count: wordCount(extractPlainText(content)),
     status,
     entry_date: new Date().toISOString().slice(0, 10),
     ...(status === 'submitted' ? { submitted_at: now } : {}),
@@ -96,7 +113,6 @@ async function assertNotSubmitted(studentId, week) {
   }
 }
 
-// PUT /api/diary/:week — save draft
 diaryRouter.put(
   '/:week',
   validate(weekParamSchema, 'params'),
@@ -105,6 +121,8 @@ diaryRouter.put(
     const { week } = req.params;
     const { content } = req.body;
 
+    const settings = await getCourseSettings();
+    assertWeekIsOpen(week, currentWeekNumber(settings));
     await assertNotSubmitted(req.student.id, week);
 
     const entry = await upsertEntry({ studentId: req.student.id, week, content, status: 'draft' });
@@ -112,7 +130,6 @@ diaryRouter.put(
   }
 );
 
-// POST /api/diary/:week/submit — finalize
 diaryRouter.post(
   '/:week/submit',
   validate(weekParamSchema, 'params'),
@@ -121,10 +138,12 @@ diaryRouter.post(
     const { week } = req.params;
     const { content } = req.body;
 
-    if (content.trim() === '') {
+    if (extractPlainText(content).trim() === '') {
       throw new AppError(400, 'Diary content cannot be empty');
     }
 
+    const settings = await getCourseSettings();
+    assertWeekIsOpen(week, currentWeekNumber(settings));
     await assertNotSubmitted(req.student.id, week);
 
     const entry = await upsertEntry({ studentId: req.student.id, week, content, status: 'submitted' });

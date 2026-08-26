@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Circle, PencilLine, Sparkles } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Circle, PencilLine, Sparkles, Timer } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { Student, WeekSummary, WeeksResponse } from '@/lib/types'
 import { useAuth } from '@/hooks/use-auth'
@@ -10,14 +10,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 
+const WRITING_ILLUSTRATION = '/vectors/writing.webp'
+
 const STATUS_META = {
   submitted: { icon: CheckCircle2, label: 'Submitted', className: 'text-emerald-600 dark:text-emerald-400' },
   draft: { icon: PencilLine, label: 'Draft saved', className: 'text-amber-600 dark:text-amber-400' },
   not_started: { icon: Circle, label: 'Not submitted', className: 'text-muted-foreground' },
 } as const
 
+function daysRemaining(dueDate: string) {
+  const due = new Date(`${dueDate}T23:59:59`)
+  const ms = due.getTime() - Date.now()
+  return Math.ceil(ms / (24 * 60 * 60 * 1000))
+}
+
 function WeekRow({ week }: { week: WeekSummary }) {
-  const meta = STATUS_META[week.status]
+  const meta = week.isLocked
+    ? { icon: AlertTriangle, label: 'Missed', className: 'text-destructive' }
+    : STATUS_META[week.status]
   return (
     <Link
       to={`/diary/${week.weekNumber}`}
@@ -35,7 +45,7 @@ function WeekRow({ week }: { week: WeekSummary }) {
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <span>{meta.label}</span>
         <Button variant="ghost" size="sm" asChild>
-          <span>{week.status === 'submitted' ? 'View' : 'Write'}</span>
+          <span>{week.status === 'submitted' || week.isLocked ? 'View' : 'Write'}</span>
         </Button>
       </div>
     </Link>
@@ -53,6 +63,7 @@ export function DashboardPage() {
   const openWeeks = data?.weeks.filter((w) => w.isOpen) ?? []
   const submittedCount = openWeeks.filter((w) => w.status === 'submitted').length
   const currentWeek = data?.weeks.find((w) => w.isCurrent)
+  const remaining = currentWeek ? daysRemaining(currentWeek.dueDate) : null
 
   return (
     <div className="space-y-6">
@@ -68,23 +79,37 @@ export function DashboardPage() {
         <Skeleton className="h-32 w-full" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader className="pb-2">
-              <CardDescription>This week</CardDescription>
-              <CardTitle className="text-2xl">Week {data?.currentWeek}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {currentWeek && (
-                <Button asChild>
-                  <Link to={`/diary/${data?.currentWeek}`}>
-                    {currentWeek.status === 'submitted'
-                      ? 'View This Week’s Diary'
-                      : currentWeek.status === 'draft'
-                        ? 'Continue This Week’s Diary'
-                        : "Write This Week's Diary"}
-                  </Link>
-                </Button>
-              )}
+          <Card className="overflow-hidden border-primary/20 bg-primary/5">
+            <CardContent className="flex items-center justify-between gap-4">
+              <div className="space-y-3">
+                <CardDescription>This week</CardDescription>
+                <CardTitle className="text-2xl">Week {data?.currentWeek}</CardTitle>
+                <p className="text-sm text-muted-foreground">Write your diary for this week.</p>
+                {currentWeek && currentWeek.status !== 'submitted' && remaining !== null && (
+                  <p className="flex items-center gap-1.5 text-xs font-medium text-primary">
+                    <Timer className="size-3.5" />
+                    Due {new Date(`${currentWeek.dueDate}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                    {' · '}
+                    {remaining > 0 ? `${remaining} day${remaining === 1 ? '' : 's'} remaining` : 'Due today'}
+                  </p>
+                )}
+                {currentWeek && (
+                  <Button asChild className="whitespace-normal text-left">
+                    <Link to={`/diary/${data?.currentWeek}`}>
+                      {currentWeek.status === 'submitted'
+                        ? 'View This Week’s Diary'
+                        : currentWeek.status === 'draft'
+                          ? 'Continue This Week’s Diary'
+                          : "Write This Week's Diary"}
+                    </Link>
+                  </Button>
+                )}
+              </div>
+              <img
+                src={WRITING_ILLUSTRATION}
+                alt=""
+                className="hidden h-24 w-24 shrink-0 object-contain lg:block"
+              />
             </CardContent>
           </Card>
 
@@ -105,7 +130,7 @@ export function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Weekly Diary</CardTitle>
-          <CardDescription>Every week opens once the course reaches it — write, save a draft, or review what you submitted.</CardDescription>
+          <CardDescription>Every week opens once the course reaches it. Write, save a draft, or review what you submitted.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           {isLoading && <Skeleton className="h-40 w-full" />}

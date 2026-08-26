@@ -4,6 +4,7 @@ import { studentNav, adminNav } from './nav-config'
 import { useAuth } from '@/hooks/use-auth'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
+import { UserProfileDialog } from '@/components/UserProfileDialog'
 
 function pageTitle(pathname: string, role: 'student' | 'admin' | null) {
   const nav = role === 'admin' ? adminNav : studentNav
@@ -24,10 +25,18 @@ export function AppShell() {
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <h1 className="text-sm font-medium text-foreground">{pageTitle(location.pathname, role)}</h1>
+          <h1 className="truncate text-sm font-medium text-foreground">{pageTitle(location.pathname, role)}</h1>
+          <div className="ml-auto flex items-center">
+            <UserProfileDialog />
+          </div>
         </header>
-        <main className="flex-1 px-6 py-8">
-          <div className="mx-auto w-full max-w-5xl">
+        <main className="relative flex-1 overflow-hidden px-4 py-6 sm:px-6 sm:py-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute -right-40 -top-24 aspect-square w-[32rem] rounded-full bg-primary/10 blur-3xl" />
+            <div className="absolute -right-16 bottom-0 aspect-square w-[22rem] rounded-full bg-emerald-400/10 blur-3xl" />
+            <div className="absolute inset-y-0 right-0 w-[36rem] [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:26px_26px] [mask-image:linear-gradient(to_left,black,transparent)] opacity-40" />
+          </div>
+          <div className="relative w-full max-w-6xl">
             <Outlet />
           </div>
         </main>

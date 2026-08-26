@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Search, UserPlus, Users } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import type { Student } from '@/lib/types'
+import { Pagination } from '@/components/Pagination'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -21,19 +22,27 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
+const PAGE_SIZE = 20
+
 export function AdminStudentsPage() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
+  const [page, setPage] = useState(1)
   const [dialogOpen, setDialogOpen] = useState(false)
   const queryClient = useQueryClient()
 
+  const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) })
+  if (debouncedSearch) params.set('q', debouncedSearch)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['students', debouncedSearch],
-    queryFn: () =>
-      api.get<{ students: Student[]; total: number }>(
-        `/admin/students${debouncedSearch ? `?q=${encodeURIComponent(debouncedSearch)}` : ''}`
-      ),
+    queryKey: ['students', debouncedSearch, page],
+    queryFn: () => api.get<{ students: Student[]; total: number }>(`/admin/students?${params.toString()}`),
   })
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setPage(1)
+  }
 
   async function toggleStatus(student: Student) {
     const nextStatus = student.status === 'active' ? 'inactive' : 'active'
@@ -69,7 +78,7 @@ export function AdminStudentsPage() {
         <Input
           placeholder="Search by name, email or student ID…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           className="pl-9"
         />
       </div>
@@ -79,7 +88,7 @@ export function AdminStudentsPage() {
           {isLoading && <Skeleton className="h-64 w-full" />}
           {data && data.students.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              {search ? 'No students match your search.' : 'No students on the roster yet — add one to get started.'}
+              {search ? 'No students match your search.' : 'No students on the roster yet. Add one to get started.'}
             </p>
           )}
           {data && data.students.length > 0 && (
@@ -112,6 +121,7 @@ export function AdminStudentsPage() {
               </TableBody>
             </Table>
           )}
+          {data && <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onPageChange={setPage} />}
         </CardContent>
       </Card>
     </div>
