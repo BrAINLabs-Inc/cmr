@@ -17,21 +17,26 @@ function facts(intake: PublicIntake) {
   ]
 }
 
-// Calm, meditation-evoking backdrop for the hero only — a soft gradient
-// wash plus faint concentric "ripple" rings, not the colourful blurred
-// blobs used elsewhere before (too "generic SaaS template"). No blur
-// filters, no shadows, just very low-opacity flat vector shapes.
+// Calm, meditation-evoking backdrop for the hero only — a soft two-tone
+// gradient wash, a faint dot-grid that fades toward the edges (a common
+// refined editorial/SaaS texture, kept subtle here rather than full-bleed),
+// and concentric "ripple" rings. Deliberately not the colourful blurred
+// blobs used elsewhere before (read as generic AI-template). No blur
+// filters, no shadows — flat vector shapes and low opacity throughout.
 function MindfulnessBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-transparent to-transparent" />
-      <svg className="absolute -top-16 -right-16 size-[30rem] text-primary/[0.07] sm:-top-24 sm:-right-24 sm:size-[36rem]" viewBox="0 0 200 200" fill="none">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.06] via-transparent to-emerald-500/[0.05]" />
+      <div
+        className="absolute inset-0 opacity-60 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:28px_28px] [mask-image:radial-gradient(ellipse_70%_55%_at_50%_0%,black,transparent)]"
+      />
+      <svg className="absolute -top-16 -right-16 size-[30rem] text-primary/[0.09] sm:-top-24 sm:-right-24 sm:size-[36rem]" viewBox="0 0 200 200" fill="none">
         <circle cx="100" cy="100" r="35" stroke="currentColor" strokeWidth="1" />
         <circle cx="100" cy="100" r="60" stroke="currentColor" strokeWidth="1" />
         <circle cx="100" cy="100" r="85" stroke="currentColor" strokeWidth="1" />
         <circle cx="100" cy="100" r="99" stroke="currentColor" strokeWidth="1" />
       </svg>
-      <svg className="absolute -bottom-24 -left-20 size-80 text-primary/[0.05]" viewBox="0 0 200 200" fill="none">
+      <svg className="absolute -bottom-24 -left-20 size-80 text-emerald-600/[0.08] dark:text-emerald-400/[0.08]" viewBox="0 0 200 200" fill="none">
         <circle cx="100" cy="100" r="45" stroke="currentColor" strokeWidth="1" />
         <circle cx="100" cy="100" r="75" stroke="currentColor" strokeWidth="1" />
         <circle cx="100" cy="100" r="99" stroke="currentColor" strokeWidth="1" />
