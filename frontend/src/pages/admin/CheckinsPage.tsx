@@ -75,7 +75,7 @@ function CohortSnapshot() {
 
 const PAGE_SIZE = 20
 
-export function AdminCheckinsPage() {
+export function CheckinsPage() {
   const [week, setWeek] = useState<string>('all')
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)

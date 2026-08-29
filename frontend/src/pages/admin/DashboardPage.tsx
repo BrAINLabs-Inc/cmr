@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 type CourseSettings = {
   total_weeks: number
-  intake_label: string | null
+  intake: { intake_number: number } | null
 }
 
 type StatsOverview = {
@@ -109,7 +109,7 @@ function WeeklyTrendChart({ overview }: { overview: StatsOverview }) {
   )
 }
 
-export function AdminDashboardPage() {
+export function DashboardPage() {
   const { profile } = useAuth()
   const admin = profile as Admin
   const [week, setWeek] = useState<number | null>(null)
@@ -147,7 +147,7 @@ export function AdminDashboardPage() {
             </h1>
             <p className="text-sm text-muted-foreground">
               Submission overview across the cohort
-              {settings?.settings.intake_label ? ` (${settings.settings.intake_label})` : ''}.
+              {settings?.settings.intake ? ` (Intake ${settings.settings.intake.intake_number})` : ''}.
             </p>
           </div>
         </div>

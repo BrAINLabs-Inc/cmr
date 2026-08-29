@@ -12,7 +12,8 @@ import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import { authRouter } from './routes/auth.js';
 import { diaryRouter } from './routes/diary.js';
 import { checkinRouter } from './routes/checkin.js';
-import { adminRouter } from './routes/admin.js';
+import { adminRouter } from './routes/admin/index.js';
+import { publicRouter } from './routes/public.js';
 
 export const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/diary', diaryRouter);
 app.use('/api/checkin', checkinRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/public', publicRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

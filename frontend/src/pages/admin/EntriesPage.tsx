@@ -50,7 +50,7 @@ function MetaRow({ icon: Icon, label, value }: { icon: typeof Mail; label: strin
 
 const PAGE_SIZE = 20
 
-export function AdminEntriesPage() {
+export function EntriesPage() {
   const [week, setWeek] = useState<string>('all')
   const [status, setStatus] = useState<string>('all')
   const [search, setSearch] = useState('')

@@ -24,7 +24,7 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 const PAGE_SIZE = 20
 
-export function AdminStudentsPage() {
+export function StudentsPage() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
   const [page, setPage] = useState(1)

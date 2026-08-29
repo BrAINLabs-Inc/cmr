@@ -14,6 +14,16 @@ export function errorHandler(err, req, res, next) {
     });
   }
 
+  if (err.name === 'MulterError') {
+    const message =
+      err.code === 'LIMIT_FILE_SIZE'
+        ? 'One of your files is too large (10 MB max per file).'
+        : err.code === 'LIMIT_FILE_COUNT' || err.code === 'LIMIT_UNEXPECTED_FILE'
+          ? 'Too many files uploaded.'
+          : 'Could not process the uploaded files.';
+    return res.status(400).json({ error: message });
+  }
+
   const statusCode = err.statusCode ?? 500;
   const isExpected = err.expected === true;
 

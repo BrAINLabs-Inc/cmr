@@ -66,6 +66,6 @@ export const courseSettingsPatchSchema = z
   .object({
     courseStartDate: z.string().date().optional(),
     courseEndDate: z.string().date().optional(),
-    intakeLabel: z.string().trim().max(100).optional(),
+    intakeId: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update' });

@@ -1,23 +1,31 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { AlertTriangle, CalendarClock, CalendarRange, GraduationCap, Hourglass } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CalendarClock, CalendarRange, GraduationCap, Hourglass } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
+import type { Intake } from '@/lib/types'
+import { useAdminIntakes } from '@/hooks/use-admin-intakes'
+import { INTAKE_STATUS_LABEL } from '@/lib/intakes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 type CourseSettings = {
   course_start_date: string
   course_end_date: string
   total_weeks: number
-  intake_label: string | null
+  intake_id: string | null
+  intake: Pick<Intake, 'id' | 'intake_number' | 'course_title' | 'status'> | null
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 const MS_PER_WEEK = 7 * MS_PER_DAY
+const NO_INTAKE_VALUE = 'none'
 
 function formatDate(value: string) {
   return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { dateStyle: 'long' })
@@ -28,21 +36,22 @@ function daysUntil(value: string) {
   return Math.ceil((target - Date.now()) / MS_PER_DAY)
 }
 
-export function AdminSettingsPage() {
+export function SettingsPage() {
   const queryClient = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ['course-settings'],
     queryFn: () => api.get<{ settings: CourseSettings }>('/admin/course-settings'),
   })
+  const { data: intakesData } = useAdminIntakes()
 
-  const [intakeLabel, setIntakeLabel] = useState('')
+  const [intakeId, setIntakeId] = useState<string>(NO_INTAKE_VALUE)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (data?.settings) {
-      setIntakeLabel(data.settings.intake_label ?? '')
+      setIntakeId(data.settings.intake_id ?? NO_INTAKE_VALUE)
       setStartDate(data.settings.course_start_date)
       setEndDate(data.settings.course_end_date)
     }
@@ -60,7 +69,7 @@ export function AdminSettingsPage() {
       await api.patch('/admin/course-settings', {
         courseStartDate: startDate,
         courseEndDate: endDate,
-        intakeLabel: intakeLabel.trim(),
+        intakeId: intakeId === NO_INTAKE_VALUE ? null : intakeId,
       })
       toast.success('Course settings updated')
       queryClient.invalidateQueries({ queryKey: ['course-settings'] })
@@ -74,6 +83,7 @@ export function AdminSettingsPage() {
   }
 
   const remaining = data?.settings ? daysUntil(data.settings.course_end_date) : null
+  const linkedIntake = data?.settings.intake ?? null
 
   return (
     <div className="space-y-6">
@@ -82,7 +92,8 @@ export function AdminSettingsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Course Settings</h1>
           <p className="text-sm text-muted-foreground">
-            Set the current intake's start and end dates. Weekly diary periods are calculated automatically.
+            Set the diary window for the intake currently being evaluated. Weekly diary periods are calculated
+            automatically from these dates.
           </p>
         </div>
       </div>
@@ -102,10 +113,21 @@ export function AdminSettingsPage() {
                     <GraduationCap className="size-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">Current intake</p>
-                    <p className="truncate text-lg font-semibold">{data.settings.intake_label || 'Unlabeled'}</p>
+                    <p className="text-xs text-muted-foreground">Evaluating</p>
+                    {linkedIntake ? (
+                      <p className="truncate text-lg font-semibold">
+                        Intake {linkedIntake.intake_number}
+                        <Badge variant="outline" className="ml-2 align-middle text-xs">
+                          {INTAKE_STATUS_LABEL[linkedIntake.status]}
+                        </Badge>
+                      </p>
+                    ) : (
+                      <p className="truncate text-lg font-semibold text-muted-foreground">No intake linked</p>
+                    )}
                   </div>
                 </div>
+
+                {linkedIntake && <p className="truncate text-sm text-muted-foreground">{linkedIntake.course_title}</p>}
 
                 <div className="space-y-2.5 text-sm">
                   <div className="flex items-center justify-between gap-3">
@@ -145,6 +167,13 @@ export function AdminSettingsPage() {
                     <span>This intake has ended. Update the dates below to open the next one.</span>
                   </div>
                 )}
+
+                <Button variant="outline" size="sm" asChild className="w-full">
+                  <Link to="/admin/intakes">
+                    Manage Intakes
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -153,25 +182,34 @@ export function AdminSettingsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <CalendarClock className="size-4 text-primary" />
-                <CardTitle className="text-base">Course Duration</CardTitle>
+                <CardTitle className="text-base">Diary Evaluation Window</CardTitle>
               </div>
               <CardDescription>
-                Each diary week runs 7 days from the start date. The total number of weeks is derived from these
-                two dates. Students can never write beyond today's week or past the end date.
+                Each diary week runs 7 days from the start date. The total number of weeks is derived from these two
+                dates. Students can never write beyond today's week or past the end date. Link the intake whose
+                enrolled students are doing this diary — its marketing content and application window are managed
+                separately under <Link to="/admin/intakes" className="underline underline-offset-2">Intakes</Link>.
               </CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="intakeLabel">Intake Label</Label>
-                  <Input
-                    id="intakeLabel"
-                    placeholder="e.g. 03rd Intake"
-                    value={intakeLabel}
-                    onChange={(e) => setIntakeLabel(e.target.value)}
-                  />
+                  <Label htmlFor="intakeId">Intake</Label>
+                  <Select value={intakeId} onValueChange={setIntakeId}>
+                    <SelectTrigger id="intakeId" className="w-full">
+                      <SelectValue placeholder="No intake linked" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NO_INTAKE_VALUE}>No intake linked</SelectItem>
+                      {intakesData?.intakes.map((intake) => (
+                        <SelectItem key={intake.id} value={intake.id}>
+                          Intake {intake.intake_number} — {intake.course_title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground">
-                    A name for the cohort these dates belong to, so it's clear which intake is currently configured.
+                    Which intake's roster is currently being evaluated through the weekly diary.
                   </p>
                 </div>
 

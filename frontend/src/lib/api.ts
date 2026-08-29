@@ -44,6 +44,18 @@ export const api = {
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 }
 
+// For multipart/form-data submissions (file uploads). Does not send the
+// Authorization header or a Content-Type — the browser sets the multipart
+// boundary itself, and this is only ever used for the public /apply form.
+export async function postForm<T>(path: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: formData })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }))
+    throw new ApiError(body.error || 'Request failed', res.status)
+  }
+  return res.json() as Promise<T>
+}
+
 export async function downloadExport(path: string, filename: string) {
   const headers = await authHeader()
   const res = await fetch(`${API_URL}${path}`, { headers })

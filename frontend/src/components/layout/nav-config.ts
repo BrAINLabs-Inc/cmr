@@ -1,4 +1,14 @@
-import { CalendarRange, CircleHelp, HeartHandshake, History, LayoutDashboard, NotebookPen, Users } from 'lucide-react'
+import {
+  CalendarRange,
+  CircleHelp,
+  ClipboardList,
+  GraduationCap,
+  HeartHandshake,
+  History,
+  LayoutDashboard,
+  NotebookPen,
+  Users,
+} from 'lucide-react'
 import type { ComponentType } from 'react'
 
 export type NavItem = {
@@ -20,5 +30,7 @@ export const adminNav: NavItem[] = [
   { title: 'Students', url: '/admin/students', icon: Users },
   { title: 'Diary Entries', url: '/admin/entries', icon: NotebookPen },
   { title: 'Check-ins', url: '/admin/checkins', icon: HeartHandshake },
+  { title: 'Intakes', url: '/admin/intakes', icon: GraduationCap },
+  { title: 'Applications', url: '/admin/applications', icon: ClipboardList },
   { title: 'Course Settings', url: '/admin/settings', icon: CalendarRange },
 ]

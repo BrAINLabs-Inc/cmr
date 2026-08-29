@@ -21,6 +21,24 @@ Supabase project: `ovncyabynsssugruoybd`. Migrations live in
 4. By default `course_settings.course_start_date` is set to today with
    `total_weeks = 12`. Update it once via the admin API (see below) or
    directly in the table editor to match the actual course start date.
+5. Paste and run `backend/database/0007_intakes.sql` and
+   `backend/database/0008_applications.sql` — these add the admin-managed
+   `intakes` table (landing page content) and the `applications` table
+   (in-app applicant registration). See `SRS/intake-management.md`.
+6. In the Supabase Dashboard, create a **private** Storage bucket named
+   `application-documents` (Storage → New bucket → leave "Public bucket"
+   unchecked). This is where uploaded degree documents and payment slips
+   are stored; there is no SQL migration for it.
+7. Paste and run `backend/database/0009_link_course_settings_to_intake.sql`
+   — replaces the old free-text `course_settings.intake_label` with a real
+   `intake_id` reference to the `intakes` table, so the diary's "current
+   cohort" is the same intake row shown everywhere else, not a duplicate
+   label an admin had to keep in sync by hand.
+8. Paste and run `backend/database/0010_application_enrollment_link.sql` —
+   adds `applications.enrolled_student_id`. Approving an application now
+   automatically enrolls the applicant onto the `students` roster (or links
+   an existing roster row with the same email) instead of requiring a
+   separate manual "add student" step.
 
 New schema changes go in a new `backend/database/NNNN_description.sql` file,
 numbered after the last one — there's no migration runner, each file is
@@ -165,9 +183,12 @@ was designed so these can be added as new columns/tables without reworking
 what's here — e.g. a `meditation_logs` or `wellbeing_checkins` table keyed
 on `(student_id, week_number)` alongside `diary_entries`.
 
-Also not yet built: the course intake/module details shown on the public
-landing page (`/`) are currently hardcoded in `LandingPage.tsx` rather than
-admin-editable. See `SRS/intake-management.md` for the planned design.
+Also now built: admin-managed course intakes and in-app applicant
+registration, replacing the old hardcoded landing page content and the
+external Google Form. Admins manage intakes at `/admin/intakes` and review
+submitted applications (including uploaded documents and a CSV/Excel
+export) at `/admin/applications`; prospective applicants apply at `/apply`.
+See `SRS/intake-management.md` for the full design.
 
 ## Security note
 
