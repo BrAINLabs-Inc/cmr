@@ -3,16 +3,15 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { api } from '@/lib/api'
 import type { PublicIntake } from '@/lib/types'
-import { SiteHeader, SiteFooter } from './landing/SiteHeaderFooter'
-import { HeroSection } from './landing/HeroSection'
-import { ClosedNotice, ModulesSection, ObjectivesSection, EligibilityDurationSection, FeesSection } from './landing/CourseContentSections'
-import { HowToApplySection } from './landing/HowToApplySection'
-import { StudentFeaturesSection, ConfidentialitySection } from './landing/StudentSections'
+import { CMR_ACADEMIC_PROGRAMME_URL, CMR_EMAIL, CMR_WEBSITE_URL } from '@/lib/cmr-org-info'
+import { SiteHeader, SiteFooter } from './SiteHeaderFooter'
+import { HeroSection } from './HeroSection'
+import { AboutSection } from './AboutSection'
+import { ClosedNotice, ModulesSection, ObjectivesSection, EligibilityDurationSection } from './CourseContentSections'
+import { HowToApplySection } from './HowToApplySection'
+import { StudentFeaturesSection, ConfidentialitySection } from './StudentSections'
 
 const FALLBACK_COURSE_TITLE = 'Translating the Science of Happiness and Meditation into Practice'
-const FALLBACK_CMR_WEBSITE = 'https://med.cmb.ac.lk/cmr/'
-const FALLBACK_ACADEMIC_PROGRAMME_URL = 'https://med.cmb.ac.lk/academic-programs/tshmp/'
-const FALLBACK_CONTACT_EMAIL = 'cmr@med.cmb.ac.lk'
 
 export function LandingPage() {
   const { loading, session, role } = useAuth()
@@ -28,9 +27,9 @@ export function LandingPage() {
 
   const intake = data?.intake ?? null
   const courseTitle = intake?.course_title ?? FALLBACK_COURSE_TITLE
-  const contactEmail = intake?.contact_email || FALLBACK_CONTACT_EMAIL
-  const websiteUrl = intake?.contact_website_url || FALLBACK_CMR_WEBSITE
-  const academicProgrammeUrl = intake?.academic_programme_url || FALLBACK_ACADEMIC_PROGRAMME_URL
+  const contactEmail = intake?.contact_email || CMR_EMAIL
+  const websiteUrl = intake?.contact_website_url || CMR_WEBSITE_URL
+  const academicProgrammeUrl = intake?.academic_programme_url || CMR_ACADEMIC_PROGRAMME_URL
   const applyUrl = typeof window !== 'undefined' ? `${window.location.origin}/apply` : '/apply'
 
   return (
@@ -40,10 +39,10 @@ export function LandingPage() {
       <main className="flex-1">
         <HeroSection intake={intake} intakeLoading={intakeLoading} courseTitle={courseTitle} />
         <ClosedNotice show={!intakeLoading && !intake} />
+        <AboutSection />
         <ModulesSection intake={intake} />
         <ObjectivesSection intake={intake} />
         <EligibilityDurationSection intake={intake} />
-        <FeesSection intake={intake} />
         <HowToApplySection intake={intake} applyUrl={applyUrl} />
         <StudentFeaturesSection />
         <ConfidentialitySection />

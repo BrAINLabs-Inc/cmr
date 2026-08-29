@@ -3,7 +3,7 @@ import type { ComponentType } from 'react'
 import { ArrowRight, BarChart3, Lock, PenLine, Save, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CardContent } from '@/components/ui/card'
-import { HoverCard, SectionHeading, WaveDivider } from './shared'
+import { HoverCard, SectionHeading } from './shared'
 
 const FEATURES: { title: string; description: string; icon: ComponentType<{ className?: string }> }[] = [
   {
@@ -30,47 +30,44 @@ const FEATURES: { title: string; description: string; icon: ComponentType<{ clas
 
 export function StudentFeaturesSection() {
   return (
-    <>
-      <WaveDivider />
-      <section className="py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionHeading
-            eyebrow="For enrolled students"
-            title="Your Weekly Digital Diary"
-            description="Once you're part of the course, this portal is where you'll keep a private weekly reflection throughout the programme."
-          />
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
-            {FEATURES.map((feature) => (
-              <HoverCard key={feature.title}>
-                <CardContent className="flex gap-4 pt-6">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <feature.icon className="size-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{feature.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{feature.description}</p>
-                  </div>
-                </CardContent>
-              </HoverCard>
-            ))}
-          </div>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button size="lg" variant="outline" asChild>
-              <Link to="/login">
-                <Lock className="size-4" />
-                Sign in to your diary
-              </Link>
-            </Button>
-            <Button size="lg" variant="ghost" asChild>
-              <Link to="/register">
-                First time here? Create your account
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-          </div>
+    <section className="py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SectionHeading
+          eyebrow="For enrolled students"
+          title="Your Weekly Digital Diary"
+          description="Once you're part of the course, this portal is where you'll keep a private weekly reflection throughout the programme."
+        />
+        <div className="mt-12 grid gap-4 sm:grid-cols-2">
+          {FEATURES.map((feature) => (
+            <HoverCard key={feature.title}>
+              <CardContent className="flex gap-4 pt-6">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <feature.icon className="size-5" />
+                </div>
+                <div>
+                  <h3 className="font-medium">{feature.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{feature.description}</p>
+                </div>
+              </CardContent>
+            </HoverCard>
+          ))}
         </div>
-      </section>
-    </>
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button size="lg" variant="outline" asChild>
+            <Link to="/login">
+              <Lock className="size-4" />
+              Sign in to your diary
+            </Link>
+          </Button>
+          <Button size="lg" variant="ghost" asChild>
+            <Link to="/register">
+              First time here? Create your account
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </section>
   )
 }
 

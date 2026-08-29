@@ -1,17 +1,57 @@
-import { Link } from 'react-router-dom'
-import { ExternalLink, Mail, NotebookPen } from 'lucide-react'
+import { Link, NavLink } from 'react-router-dom'
+import { ExternalLink, Mail, MapPin, NotebookPen, Phone } from 'lucide-react'
+import {
+  CMR_ACADEMIC_PROGRAMME_URL,
+  CMR_ADDRESS,
+  CMR_EMAIL,
+  CMR_MAP_URL,
+  CMR_PHONE_NUMBERS,
+  CMR_SHORT_NAME,
+  CMR_TWITTER_URL,
+  CMR_WEBSITE_URL,
+  CMR_YOUTUBE_URL,
+} from '@/lib/cmr-org-info'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import cmrLogo from '@/assets/cmr-logo.png'
+
+export const PUBLIC_NAV = [
+  { label: 'Home', to: '/' },
+  { label: 'Board Members', to: '/board-members' },
+  { label: 'Research', to: '/research' },
+  { label: 'Services', to: '/services' },
+  { label: 'Archives', to: '/archives' },
+  { label: 'Contact', to: '/contact' },
+]
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-2.5">
-          <img src={cmrLogo} alt="Centre for Meditation Research" className="size-8 rounded-full" />
-          <span className="text-sm font-semibold tracking-tight sm:text-base">Centre for Meditation Research</span>
-        </div>
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
+      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-6">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5 justify-self-start">
+          <img src={cmrLogo} alt={CMR_SHORT_NAME} className="size-8 rounded-full" />
+          <span className="hidden text-sm font-semibold tracking-tight sm:inline sm:text-base">{CMR_SHORT_NAME}</span>
+        </Link>
+
+        <nav className="hidden items-center gap-6 justify-self-center lg:flex">
+          {PUBLIC_NAV.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/'}
+              className={({ isActive }) =>
+                cn(
+                  'text-sm font-medium whitespace-nowrap transition-colors hover:text-foreground',
+                  isActive ? 'text-foreground' : 'text-muted-foreground'
+                )
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2 justify-self-end">
           <Button variant="ghost" asChild>
             <Link to="/login">Sign In</Link>
           </Button>
@@ -25,29 +65,60 @@ export function SiteHeader() {
 }
 
 export function SiteFooter({
-  contactEmail,
-  websiteUrl,
-  academicProgrammeUrl,
+  contactEmail = CMR_EMAIL,
+  websiteUrl = CMR_WEBSITE_URL,
+  academicProgrammeUrl = CMR_ACADEMIC_PROGRAMME_URL,
   courseTitle,
 }: {
-  contactEmail: string
-  websiteUrl: string
-  academicProgrammeUrl: string
-  courseTitle: string
+  contactEmail?: string
+  websiteUrl?: string
+  academicProgrammeUrl?: string
+  courseTitle?: string
 }) {
   return (
-    <footer className="border-t bg-muted py-12">
+    <footer className="border-t bg-muted/30 py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:justify-between sm:text-left">
+        <div className="grid gap-8 sm:grid-cols-3">
           <div>
-            <div className="flex items-center justify-center gap-2.5 sm:justify-start">
+            <div className="flex items-center gap-2.5">
               <img src={cmrLogo} alt="" className="size-8 rounded-full" />
-              <span className="font-semibold">Centre for Meditation Research</span>
+              <span className="font-semibold">{CMR_SHORT_NAME}</span>
             </div>
-            <p className="mt-2 max-w-sm text-xs text-muted-foreground">Faculty of Medicine, University of Colombo</p>
+            <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+              <MapPin className="mt-0.5 size-3.5 shrink-0" />
+              <a href={CMR_MAP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">
+                {CMR_ADDRESS}
+              </a>
+            </p>
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Phone className="size-3.5 shrink-0" />
+              {CMR_PHONE_NUMBERS[0]}
+            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <a href={CMR_TWITTER_URL} target="_blank" rel="noopener noreferrer" aria-label="Twitter / X" className="text-muted-foreground hover:text-foreground">
+                <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
+                  <path d="M18.9 2H22l-7.6 8.7L23.4 22h-7l-5.5-7.2L4.6 22H1.5l8.1-9.3L1 2h7.2l5 6.6L18.9 2Zm-1.2 18h1.7L7.4 4h-1.8l12.1 16Z" />
+                </svg>
+              </a>
+              <a href={CMR_YOUTUBE_URL} target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="text-muted-foreground hover:text-foreground">
+                <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
+                  <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.5V8.5l6.3 3.5-6.3 3.5Z" />
+                </svg>
+              </a>
+            </div>
           </div>
 
-          <div className="flex flex-col items-center gap-1.5 text-sm sm:items-start">
+          <div className="flex flex-col gap-1.5 text-sm">
+            <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Explore</p>
+            {PUBLIC_NAV.filter((item) => item.to !== '/').map((item) => (
+              <Link key={item.to} to={item.to} className="text-muted-foreground hover:text-foreground">
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-1.5 text-sm">
+            <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Get in touch</p>
             <a href={`mailto:${contactEmail}`} className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground">
               <Mail className="size-4" />
               {contactEmail}
@@ -73,7 +144,10 @@ export function SiteFooter({
           </div>
         </div>
 
-        <p className="mt-8 border-t pt-6 text-center text-xs text-muted-foreground">Certificate Course on {courseTitle}</p>
+        <p className="mt-8 border-t pt-6 text-center text-xs text-muted-foreground">
+          {courseTitle ? `Certificate Course on ${courseTitle} · ` : ''}
+          Faculty of Medicine, University of Colombo
+        </p>
       </div>
     </footer>
   )

@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import { getInitials } from '@/lib/people'
 import { Card } from '@/components/ui/card'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 export function SectionHeading({ eyebrow, title, description }: { eyebrow?: string; title: string; description?: string }) {
   return (
@@ -12,24 +14,38 @@ export function SectionHeading({ eyebrow, title, description }: { eyebrow?: stri
   )
 }
 
-export function WaveDivider({ flip }: { flip?: boolean }) {
-  return (
-    <div aria-hidden className={cn('relative h-12 w-full overflow-hidden bg-background sm:h-16', flip && 'bg-muted')}>
-      <svg
-        viewBox="0 0 1440 100"
-        preserveAspectRatio="none"
-        className={cn('absolute inset-0 h-full w-full text-muted', flip && 'text-background')}
-      >
-        <path d="M0,40 C280,95 520,10 760,35 C1020,62 1200,12 1440,45 L1440,100 L0,100 Z" fill="currentColor" />
-      </svg>
-    </div>
-  )
+// Plain, flat card — solid background, thin border, no blur/translucency/
+// shadow. A subtle border-color shift on hover is enough affordance.
+export function HoverCard({ className, children }: { className?: string; children: ReactNode }) {
+  return <Card className={cn('transition-colors duration-150 hover:ring-primary/40', className)}>{children}</Card>
 }
 
-export function HoverCard({ className, children }: { className?: string; children: ReactNode }) {
+// Small round photo + name (+ optional role) — used for board/leadership
+// mentions. Falls back to initials automatically if the photo fails to load.
+export function PersonChip({
+  name,
+  role,
+  photo,
+  size = 'default',
+  className,
+}: {
+  name: string
+  role?: string
+  photo?: string
+  size?: 'sm' | 'default' | 'lg'
+  className?: string
+}) {
+  const avatarSize = size === 'lg' ? 'size-20' : size === 'sm' ? 'size-8' : 'size-10'
   return (
-    <Card className={cn('transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/5', className)}>
-      {children}
-    </Card>
+    <div className={cn('flex items-center gap-3', className)}>
+      <Avatar className={cn(avatarSize, 'shrink-0')}>
+        {photo && <AvatarImage src={photo} alt={name} />}
+        <AvatarFallback>{getInitials(name)}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-foreground">{name}</p>
+        {role && <p className="text-xs text-muted-foreground">{role}</p>}
+      </div>
+    </div>
   )
 }

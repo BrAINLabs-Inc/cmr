@@ -39,6 +39,13 @@ Supabase project: `ovncyabynsssugruoybd`. Migrations live in
    automatically enrolls the applicant onto the `students` roster (or links
    an existing roster row with the same email) instead of requiring a
    separate manual "add student" step.
+9. Optional: paste and run `backend/database/0011_seed_tshmp_intake.sql` to
+   seed intake 3 with the real course content from
+   https://med.cmb.ac.lk/academic-programs/tshmp/ (modules, objectives,
+   eligibility, fee note) as a `closed`/unpublished historical record —
+   useful as a starting point to duplicate from when creating the next
+   intake in `/admin/intakes`, since fees and the exact commencing date
+   weren't published on that page and are left blank for an admin to fill in.
 
 New schema changes go in a new `backend/database/NNNN_description.sql` file,
 numbered after the last one — there's no migration runner, each file is
