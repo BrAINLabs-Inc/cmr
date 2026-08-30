@@ -14,7 +14,7 @@ type ConfirmDialogProps = {
 }
 
 // Shared confirmation modal for actions with real consequences (publish,
-// delete, etc.) — replaces the browser's native window.confirm(), which
+// delete, etc.); replaces the browser's native window.confirm(), which
 // can't be styled, blocks the whole tab, and reads as a generic "leaving
 // this page?" prompt rather than a clear description of what will happen.
 export function ConfirmDialog({

@@ -87,7 +87,7 @@ export function IntakeDialog({
   // Re-sync the form to the intake being edited whenever the dialog opens.
   // This can't live in onOpenChange: that only fires on Radix-initiated
   // close events (Escape, overlay click), never when the parent opens the
-  // dialog by flipping the `open` prop — which is how every "Edit" click
+  // dialog by flipping the `open` prop, which is how every "Edit" click
   // here actually opens it, so the form used to keep stale data instead of
   // the row that was just clicked.
   useEffect(() => {

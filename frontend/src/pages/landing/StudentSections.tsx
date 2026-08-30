@@ -52,14 +52,14 @@ export function StudentFeaturesSection() {
             </HoverCard>
           ))}
         </div>
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button size="lg" variant="outline" asChild>
+        <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+          <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
             <Link to="/login">
               <Lock className="size-4" />
               Sign in to your diary
             </Link>
           </Button>
-          <Button size="lg" variant="ghost" asChild>
+          <Button size="lg" variant="ghost" asChild className="h-auto w-full py-2.5 whitespace-normal sm:w-auto sm:whitespace-nowrap">
             <Link to="/register">
               First time here? Create your account
               <ArrowRight className="size-4" />

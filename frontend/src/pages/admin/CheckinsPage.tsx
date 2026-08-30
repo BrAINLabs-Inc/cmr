@@ -8,6 +8,7 @@ import { MOOD_LABELS, moodClassName, moodIcon } from '@/lib/mood'
 import { cn } from '@/lib/utils'
 import { Pagination } from '@/components/Pagination'
 import { WeeklyCheckin } from '@/components/WeeklyCheckin'
+import { MetricTileSkeleton, TableSkeleton } from '@/components/Skeletons'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,7 +24,23 @@ function CohortSnapshot() {
     queryFn: () => api.get<CheckinCohortStats>('/admin/stats/checkins'),
   })
 
-  if (isLoading || !data) return <Skeleton className="h-32 w-full" />
+  if (isLoading || !data) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <Skeleton className="h-4 w-56" />
+          <Skeleton className="mt-1 h-3 w-72" />
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <MetricTileSkeleton />
+            <MetricTileSkeleton />
+            <MetricTileSkeleton />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const tiles = [
     { label: `Checked in (Week ${data.week})`, value: `${data.checkedIn}/${data.totalStudents}`, sub: `${data.checkinRate}%` },
@@ -143,7 +160,9 @@ export function CheckinsPage() {
 
       <Card>
         <CardContent className="pt-6">
-          {isLoading && <Skeleton className="h-64 w-full" />}
+          {isLoading && (
+            <TableSkeleton columns={['Student ID', 'Student', 'Week', 'Meditation', 'Mood', 'Updated', 'Action']} />
+          )}
           {data && data.checkins.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">No check-ins match your filters.</p>
           )}

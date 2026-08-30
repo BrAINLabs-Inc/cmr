@@ -20,12 +20,12 @@ function meditationExperienceValue(row) {
   return row.has_meditation_experience ? 'Yes' : 'No';
 }
 
-// Single source of truth for "what an application export contains" — CSV
+// Single source of truth for "what an application export contains": CSV
 // and Excel use every column; the PDF report picks a readable subset of it
 // by header name (see PDF_SUMMARY_HEADERS below) instead of redefining
 // its own accessors.
 export const EXPORT_COLUMNS = [
-  { header: 'Intake', value: (r) => (r.intake ? `${r.intake.intake_number} — ${r.intake.course_title}` : '') },
+  { header: 'Intake', value: (r) => (r.intake ? `${r.intake.intake_number} · ${r.intake.course_title}` : '') },
   { header: 'Status', value: (r) => r.status },
   { header: 'Student Number', value: (r) => r.student?.student_number ?? '' },
   { header: 'Submitted At', value: (r) => r.submitted_at },
@@ -150,7 +150,7 @@ export function streamApplicationsPdf(res, rows, summary) {
     }
 
     const y = doc.y;
-    const cells = PDF_COLUMNS.map((c) => String(c.value(row) ?? '—'));
+    const cells = PDF_COLUMNS.map((c) => String(c.value(row) ?? '-'));
     const rowHeight = Math.max(...cells.map((text) => doc.heightOfString(text, { width: colWidth - 6 })));
 
     let x = doc.page.margins.left;

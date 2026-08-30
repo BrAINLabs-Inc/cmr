@@ -1,17 +1,18 @@
-import { useEffect, type ReactNode, useState } from 'react'
+import { useEffect, type ComponentType, type ReactNode, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { ExternalLink, FileText, UserCheck } from 'lucide-react'
+import { ClipboardCheck, ExternalLink, FileText, GraduationCap, User, UserCheck } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import type { ApplicationDetail, ApplicationFileRef, ApplicationStatus } from '@/lib/types'
-import { STATUS_LABEL } from './constants'
+import { STATUS_LABEL, STATUS_VARIANT } from './constants'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from '@/components/ui/sheet'
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   if (value === null || value === undefined || value === '') return null
@@ -23,10 +24,13 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   )
 }
 
-function DetailSection({ title, children }: { title: string; children: ReactNode }) {
+function DetailSection({ title, icon: Icon, children }: { title: string; icon: ComponentType<{ className?: string }>; children: ReactNode }) {
   return (
     <section className="space-y-3">
-      <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="flex items-center gap-2">
+        <Icon className="size-4 text-primary" />
+        <h3 className="text-sm font-semibold">{title}</h3>
+      </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">{children}</div>
     </section>
   )
@@ -38,7 +42,7 @@ function DocumentLink({ file, label }: { file: ApplicationFileRef; label: string
       href={file.url ?? undefined}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-sm transition-colors hover:bg-muted"
+      className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:border-primary/40 hover:bg-muted"
     >
       <FileText className="size-4 shrink-0 text-primary" />
       <span className="min-w-0 flex-1 truncate">
@@ -65,7 +69,7 @@ function meditationExperienceValue(application: ApplicationDetail) {
   return application.has_meditation_experience ? 'Yes' : 'No'
 }
 
-export function ApplicationDetailSheet({
+export function ApplicationDialog({
   id,
   onOpenChange,
   onSaved,
@@ -107,31 +111,60 @@ export function ApplicationDetailSheet({
     }
   }
 
+  const displayName = application ? [application.title, application.full_name].filter(Boolean).join(' ') : ''
+  const effectiveStatus = status || application?.status
+
   return (
-    <Sheet
+    <Dialog
       open={Boolean(id)}
       onOpenChange={(open) => {
         if (!open) setStatus('')
         onOpenChange(open)
       }}
     >
-      <SheetContent className="flex w-full flex-col gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-2xl data-[side=right]:lg:max-w-3xl">
-        <SheetHeader className="shrink-0 border-b px-6 py-4">
-          <SheetTitle>{application ? application.full_name : 'Application'}</SheetTitle>
-          {application?.intake && (
-            <SheetDescription>
-              Intake {application.intake.intake_number} — {application.intake.course_title}
-            </SheetDescription>
+      <DialogContent className="flex max-h-[88vh] w-[min(96vw,56rem)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none sm:w-[min(92vw,56rem)]">
+        <DialogHeader className="shrink-0 gap-1 border-b px-6 py-4">
+          <div className="flex flex-wrap items-center gap-2 pr-6">
+            <DialogTitle>{application ? displayName : 'Application'}</DialogTitle>
+            {application && <Badge variant={STATUS_VARIANT[application.status]}>{STATUS_LABEL[application.status]}</Badge>}
+          </div>
+          {application && (
+            <DialogDescription>
+              {application.intake && `Intake ${application.intake.intake_number} · ${application.intake.course_title} · `}
+              Submitted {new Date(application.submitted_at).toLocaleDateString()}
+            </DialogDescription>
           )}
-        </SheetHeader>
+        </DialogHeader>
 
         <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
-          {isLoading && <Skeleton className="h-64 w-full" />}
+          {isLoading && (
+            <div className="space-y-6">
+              {[6, 3].map((fieldCount, section) => (
+                <div key={section} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="size-4 rounded" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+                    {Array.from({ length: fieldCount }).map((_, i) => (
+                      <div key={i} className="space-y-1.5">
+                        <Skeleton className="h-3 w-16" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Skeleton className="h-10 w-full rounded-lg" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            </div>
+          )}
 
           {application && (
             <>
-              <DetailSection title="Personal Information">
-                <DetailRow label="Title" value={application.title} />
+              <DetailSection title="Personal Information" icon={User}>
                 <DetailRow label="Full Name" value={application.full_name} />
                 <DetailRow label="Name with Initials" value={application.name_with_initials} />
                 <DetailRow label="Date of Birth" value={application.date_of_birth} />
@@ -145,7 +178,7 @@ export function ApplicationDetailSheet({
 
               <Separator />
 
-              <DetailSection title="Other Information">
+              <DetailSection title="Other Information" icon={GraduationCap}>
                 <DetailRow label="Occupation" value={application.current_occupation} />
                 <DetailRow label="Education Qualification" value={educationQualificationValue(application)} />
                 <DetailRow label="Degree" value={application.degree_name} />
@@ -159,7 +192,10 @@ export function ApplicationDetailSheet({
               <Separator />
 
               <section className="space-y-3">
-                <h3 className="text-sm font-semibold">Documents</h3>
+                <div className="flex items-center gap-2">
+                  <FileText className="size-4 text-primary" />
+                  <h3 className="text-sm font-semibold">Documents</h3>
+                </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {application.degree_documents.map((doc, i) => (
                     <DocumentLink key={doc.path ?? i} file={doc} label={`Document ${i + 1}`} />
@@ -170,13 +206,17 @@ export function ApplicationDetailSheet({
 
               <Separator />
 
-              <section className="space-y-4">
-                <h3 className="text-sm font-semibold">Review</h3>
+              <section className="space-y-4 rounded-lg border bg-muted/30 p-4">
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck className="size-4 text-primary" />
+                  <h3 className="text-sm font-semibold">Review</h3>
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="review-status">Status</Label>
                     <Select value={status || application.status} onValueChange={(v) => setStatus(v as ApplicationStatus)}>
-                      <SelectTrigger id="review-status" className="w-full">
+                      <SelectTrigger id="review-status" className="w-full bg-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -207,26 +247,32 @@ export function ApplicationDetailSheet({
                     </span>
                   </div>
                 ) : (
-                  (status || application.status) === 'approved' && (
+                  effectiveStatus === 'approved' && (
                     <p className="text-xs text-muted-foreground">Saving will enroll this applicant onto the student roster.</p>
                   )
                 )}
 
                 <div className="space-y-2">
                   <Label htmlFor="review-notes">Admin Notes</Label>
-                  <Textarea id="review-notes" rows={3} value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} />
+                  <Textarea
+                    id="review-notes"
+                    rows={3}
+                    className="bg-background"
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                  />
                 </div>
               </section>
             </>
           )}
         </div>
 
-        <SheetFooter className="shrink-0 flex-row justify-end border-t px-6 py-4">
+        <DialogFooter className="mx-0 mb-0 shrink-0 rounded-b-xl border-t px-6 py-4">
           <Button onClick={handleSave} disabled={saving || !application}>
             {saving ? 'Saving…' : 'Save'}
           </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

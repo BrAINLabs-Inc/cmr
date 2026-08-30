@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
+import { StatCardSkeleton } from '@/components/Skeletons'
 
 const WRITING_ILLUSTRATION = '/vectors/writing.webp'
 const RECENT_WEEKS_LIMIT = 6
@@ -205,10 +206,53 @@ export function DashboardPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-40 w-full" />
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="space-y-3 pt-6">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-7 w-24" />
+                <Skeleton className="h-3 w-40" />
+                <Skeleton className="h-8 w-36" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-7 w-16" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-2 w-full rounded-full" />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <StatCardSkeleton compact />
+            <StatCardSkeleton compact />
+            <StatCardSkeleton compact />
+            <StatCardSkeleton compact />
+          </div>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="mt-1 h-3 w-64" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <Skeleton key={i} className="size-5 rounded-[6px]" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <StatCardSkeleton compact />
+            <StatCardSkeleton compact />
+          </div>
+        </>
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -331,7 +375,16 @@ export function DashboardPage() {
           <CardDescription>Every week opens once the course reaches it. Write, save a draft, or review what you submitted.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          {isLoading && <Skeleton className="h-40 w-full" />}
+          {isLoading &&
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg border px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-5 rounded-full" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-4 w-14" />
+              </div>
+            ))}
           {recentWeeks.map((w) => (
             <WeekRow key={w.weekNumber} week={w} />
           ))}

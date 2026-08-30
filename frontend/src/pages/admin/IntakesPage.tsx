@@ -8,16 +8,16 @@ import { INTAKE_STATUS_LABEL } from '@/lib/intakes'
 import { ADMIN_INTAKES_QUERY_KEY, useAdminIntakes } from '@/hooks/use-admin-intakes'
 import { IntakeDialog } from './intakes/IntakeDialog'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { TableSkeleton } from '@/components/Skeletons'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-type ActionType = 'publish' | 'unpublish' | 'delete'
-type PendingAction = { type: ActionType; intake: Intake }
+type ActionType = 'publish' | 'unpublish' | 'delete' | 'status'
+type PendingAction = { type: ActionType; intake: Intake; status?: IntakeStatus }
 
-const ACTION_COPY: Record<ActionType, { title: (n: number) => string; description: string; confirmLabel: string; destructive?: boolean }> = {
+const ACTION_COPY: Record<Exclude<ActionType, 'status'>, { title: (n: number) => string; description: string; confirmLabel: string; destructive?: boolean }> = {
   publish: {
     title: (n) => `Publish Intake ${n}?`,
     description: 'This will unpublish the currently active intake and make this one live on the landing page.',
@@ -34,6 +34,12 @@ const ACTION_COPY: Record<ActionType, { title: (n: number) => string; descriptio
     confirmLabel: 'Delete',
     destructive: true,
   },
+}
+
+const STATUS_CHANGE_DESCRIPTION: Record<IntakeStatus, string> = {
+  upcoming: 'This intake will show as upcoming and will not yet accept applications.',
+  open: 'This will open the intake for applications on the public landing page and /apply.',
+  closed: 'This will stop the intake from accepting new applications.',
 }
 
 const STATUS_OPTIONS: IntakeStatus[] = ['upcoming', 'open', 'closed']
@@ -61,15 +67,9 @@ export function IntakesPage() {
     setDialogOpen(true)
   }
 
-  async function handleStatusChange(intake: Intake, status: IntakeStatus) {
+  function handleStatusChange(intake: Intake, status: IntakeStatus) {
     if (status === intake.status) return
-    try {
-      await api.patch(`/admin/intakes/${intake.id}`, { status })
-      toast.success(`Intake ${intake.intake_number} marked ${INTAKE_STATUS_LABEL[status].toLowerCase()}`)
-      invalidate()
-    } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : 'Could not update status')
-    }
+    setPendingAction({ type: 'status', intake, status })
   }
 
   function handlePublishedChange(intake: Intake, nextPublished: boolean) {
@@ -79,12 +79,15 @@ export function IntakesPage() {
 
   async function handleConfirmedAction() {
     if (!pendingAction) return
-    const { type, intake } = pendingAction
+    const { type, intake, status } = pendingAction
     setActionLoading(true)
     try {
       if (type === 'delete') {
         await api.delete(`/admin/intakes/${intake.id}`)
         toast.success('Intake deleted')
+      } else if (type === 'status' && status) {
+        await api.patch(`/admin/intakes/${intake.id}`, { status })
+        toast.success(`Intake ${intake.intake_number} marked ${INTAKE_STATUS_LABEL[status].toLowerCase()}`)
       } else {
         await api.patch(`/admin/intakes/${intake.id}`, { isPublished: type === 'publish' })
         toast.success(type === 'publish' ? 'Intake published' : 'Intake unpublished')
@@ -92,7 +95,7 @@ export function IntakesPage() {
       invalidate()
       setPendingAction(null)
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : `Could not ${type} intake`)
+      toast.error(err instanceof ApiError ? err.message : `Could not update intake`)
     } finally {
       setActionLoading(false)
     }
@@ -116,7 +119,9 @@ export function IntakesPage() {
 
       <Card>
         <CardContent className="pt-6">
-          {isLoading && <Skeleton className="h-64 w-full" />}
+          {isLoading && (
+            <TableSkeleton columns={['Intake', 'Status', 'Published', 'Closing Date', 'Applications', 'Actions']} />
+          )}
           {data && data.intakes.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">No intakes yet. Create one to get started.</p>
           )}
@@ -136,7 +141,7 @@ export function IntakesPage() {
                 {data.intakes.map((intake) => (
                   <TableRow key={intake.id}>
                     <TableCell className="font-medium">
-                      {intake.intake_number} — {intake.course_title}
+                      {intake.intake_number} · {intake.course_title}
                     </TableCell>
                     <TableCell>
                       <Select value={intake.status} onValueChange={(v) => handleStatusChange(intake, v as IntakeStatus)}>
@@ -166,7 +171,7 @@ export function IntakesPage() {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{intake.application_closing_date ?? '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{intake.application_closing_date ?? '-'}</TableCell>
                     <TableCell>{intake.application_count ?? 0}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button variant="ghost" size="sm" onClick={() => openEditDialog(intake)}>
@@ -192,7 +197,19 @@ export function IntakesPage() {
         onSaved={invalidate}
       />
 
-      {pendingAction && (
+      {pendingAction && pendingAction.type === 'status' && pendingAction.status && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setPendingAction(null)}
+          title={`Mark Intake ${pendingAction.intake.intake_number} as ${INTAKE_STATUS_LABEL[pendingAction.status]}?`}
+          description={STATUS_CHANGE_DESCRIPTION[pendingAction.status]}
+          confirmLabel={`Mark ${INTAKE_STATUS_LABEL[pendingAction.status]}`}
+          loading={actionLoading}
+          onConfirm={handleConfirmedAction}
+        />
+      )}
+
+      {pendingAction && pendingAction.type !== 'status' && (
         <ConfirmDialog
           open
           onOpenChange={(open) => !open && setPendingAction(null)}

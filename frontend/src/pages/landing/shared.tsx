@@ -14,13 +14,13 @@ export function SectionHeading({ eyebrow, title, description }: { eyebrow?: stri
   )
 }
 
-// Plain, flat card — solid background, thin border, no blur/translucency/
+// Plain, flat card: solid background, thin border, no blur/translucency/
 // shadow. A subtle border-color shift on hover is enough affordance.
 export function HoverCard({ className, children }: { className?: string; children: ReactNode }) {
   return <Card className={cn('transition-colors duration-150 hover:ring-primary/40', className)}>{children}</Card>
 }
 
-// Small round photo + name (+ optional role) — used for board/leadership
+// Small round photo + name (+ optional role), used for board/leadership
 // mentions. Falls back to initials automatically if the photo fails to load.
 export function PersonChip({
   name,

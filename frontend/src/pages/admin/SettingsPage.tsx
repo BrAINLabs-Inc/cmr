@@ -99,9 +99,56 @@ export function SettingsPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-96 w-full" />
+        <div className="grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start">
+          <Card>
+            <CardContent className="space-y-5 pt-6">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-11 shrink-0 rounded-xl" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-5 w-28" />
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+              <Skeleton className="h-8 w-full rounded-md" />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Skeleton className="size-4 rounded" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+              <Skeleton className="mt-1 h-3 w-full" />
+              <Skeleton className="h-3 w-2/3" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-12" />
+                <Skeleton className="h-9 w-full" />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              </div>
+              <Skeleton className="h-11 w-full rounded-lg" />
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-9 w-32" />
+            </CardFooter>
+          </Card>
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start">
@@ -187,7 +234,7 @@ export function SettingsPage() {
               <CardDescription>
                 Each diary week runs 7 days from the start date. The total number of weeks is derived from these two
                 dates. Students can never write beyond today's week or past the end date. Link the intake whose
-                enrolled students are doing this diary — its marketing content and application window are managed
+                enrolled students are doing this diary; its marketing content and application window are managed
                 separately under <Link to="/admin/intakes" className="underline underline-offset-2">Intakes</Link>.
               </CardDescription>
             </CardHeader>
@@ -203,7 +250,7 @@ export function SettingsPage() {
                       <SelectItem value={NO_INTAKE_VALUE}>No intake linked</SelectItem>
                       {intakesData?.intakes.map((intake) => (
                         <SelectItem key={intake.id} value={intake.id}>
-                          Intake {intake.intake_number} — {intake.course_title}
+                          Intake {intake.intake_number} · {intake.course_title}
                         </SelectItem>
                       ))}
                     </SelectContent>

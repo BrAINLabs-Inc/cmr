@@ -111,7 +111,7 @@ applicationsRouter.patch('/:id', validate(idParamSchema, 'params'), validate(pat
   }
   if (adminNotes !== undefined) patch.admin_notes = adminNotes;
 
-  // Approving is what actually grants access to the diary system — enroll
+  // Approving is what actually grants access to the diary system: enroll
   // (or link to an already-existing) roster row in the same step, so there
   // is no separate manual "add student" action for an approved applicant.
   if (status === 'approved' && !current.enrolled_student_id) {

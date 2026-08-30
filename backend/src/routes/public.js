@@ -80,7 +80,7 @@ publicRouter.post(
     const applicationId = randomUUID();
 
     // Uploads run in parallel for speed, but Promise.all would discard the
-    // paths of files that *did* upload if a sibling upload fails — settle
+    // paths of files that *did* upload if a sibling upload fails; settle
     // instead so a partial failure can still be cleaned up from storage.
     const uploadResults = await Promise.allSettled([
       ...degreeDocuments.map((file, index) =>

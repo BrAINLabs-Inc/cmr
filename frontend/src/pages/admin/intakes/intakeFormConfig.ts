@@ -139,7 +139,7 @@ export type IntakeFormSection = {
   fields: IntakeFieldConfig[]
 }
 
-// Single source of truth for the intake form's layout — add a field here
+// Single source of truth for the intake form's layout: add a field here
 // and it appears in the right section with the right control, instead of
 // duplicating a labeled-input block by hand.
 export const INTAKE_FORM_SECTIONS: IntakeFormSection[] = [

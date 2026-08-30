@@ -5,6 +5,7 @@ import { Search, UserPlus, Users } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import type { Student } from '@/lib/types'
 import { Pagination } from '@/components/Pagination'
+import { TableSkeleton } from '@/components/Skeletons'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -19,7 +20,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Skeleton } from '@/components/ui/skeleton'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 const PAGE_SIZE = 20
@@ -85,7 +85,7 @@ export function StudentsPage() {
 
       <Card>
         <CardContent className="pt-6">
-          {isLoading && <Skeleton className="h-64 w-full" />}
+          {isLoading && <TableSkeleton columns={['Student ID', 'Name', 'Email', 'Status', 'Action']} />}
           {data && data.students.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
               {search ? 'No students match your search.' : 'No students on the roster yet. Add one to get started.'}

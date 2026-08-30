@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import { MOOD_LABELS, moodClassName, moodIcon } from '@/lib/mood'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ChartSkeleton, MetricTileSkeleton, StatCardSkeleton } from '@/components/Skeletons'
 
 type CourseSettings = {
   total_weeks: number
@@ -167,10 +167,10 @@ export function DashboardPage() {
 
       {isLoading || !stats ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
         </div>
       ) : (
         <>
@@ -210,11 +210,7 @@ export function DashboardPage() {
               <CardDescription>Percentage of active students submitted, week over week.</CardDescription>
             </CardHeader>
             <CardContent>
-              {overviewLoading || !overview ? (
-                <Skeleton className="h-52 w-full" />
-              ) : (
-                <WeeklyTrendChart overview={overview} />
-              )}
+              {overviewLoading || !overview ? <ChartSkeleton /> : <WeeklyTrendChart overview={overview} />}
             </CardContent>
           </Card>
 
@@ -228,7 +224,11 @@ export function DashboardPage() {
             </CardHeader>
             <CardContent>
               {checkinStatsLoading || !checkinStats ? (
-                <Skeleton className="h-24 w-full" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <MetricTileSkeleton />
+                  <MetricTileSkeleton />
+                  <MetricTileSkeleton />
+                </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div className="rounded-lg border bg-muted/30 px-4 py-3">

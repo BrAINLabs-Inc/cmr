@@ -136,10 +136,21 @@ export function DiaryWritePage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-10 w-72" />
-        <Skeleton className="h-96 w-full" />
+      <div className="flex flex-col gap-6 pb-16">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <Skeleton className="h-14 w-full rounded-lg" />
+        <div className="space-y-3 rounded-lg border p-4">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
       </div>
     )
   }

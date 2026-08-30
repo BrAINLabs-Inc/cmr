@@ -19,6 +19,7 @@ import { api, ApiError, downloadExport } from '@/lib/api'
 import type { DiaryEntry } from '@/lib/types'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { Pagination } from '@/components/Pagination'
+import { TableSkeleton } from '@/components/Skeletons'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,7 +27,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Skeleton } from '@/components/ui/skeleton'
 
 function formatDateTime(value: string | null | undefined) {
   if (!value) return '-'
@@ -149,7 +149,9 @@ export function EntriesPage() {
 
       <Card>
         <CardContent className="pt-6">
-          {isLoading && <Skeleton className="h-64 w-full" />}
+          {isLoading && (
+            <TableSkeleton columns={['Student ID', 'Student', 'Week', 'Status', 'Words', 'Submitted', 'Action']} />
+          )}
           {data && data.entries.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">No entries match your filters.</p>
           )}

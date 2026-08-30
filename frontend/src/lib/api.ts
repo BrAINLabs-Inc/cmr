@@ -45,7 +45,7 @@ export const api = {
 }
 
 // For multipart/form-data submissions (file uploads). Does not send the
-// Authorization header or a Content-Type — the browser sets the multipart
+// Authorization header or a Content-Type; the browser sets the multipart
 // boundary itself, and this is only ever used for the public /apply form.
 export async function postForm<T>(path: string, formData: FormData): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: formData })

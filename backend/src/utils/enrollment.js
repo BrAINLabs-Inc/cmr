@@ -53,7 +53,7 @@ export async function enrollApplicantAsStudent(application) {
       if (racedId) return racedId;
     }
     if (error.code !== '23505') throw new AppError(500, error.message);
-    // student_number collision (concurrent approval) — loop and regenerate.
+    // student_number collision (concurrent approval); loop and regenerate.
   }
 
   throw new AppError(409, 'Could not generate a unique student number. Add this student manually from the Students page.');

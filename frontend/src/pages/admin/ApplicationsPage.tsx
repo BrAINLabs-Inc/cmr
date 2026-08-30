@@ -7,14 +7,14 @@ import type { ApplicationSummary } from '@/lib/types'
 import { useAdminIntakes } from '@/hooks/use-admin-intakes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { STATUS_LABEL, STATUS_VARIANT } from './applications/constants'
-import { ApplicationDetailSheet } from './applications/ApplicationDetailSheet'
+import { ApplicationDialog } from './applications/ApplicationDialog'
 import { Pagination } from '@/components/Pagination'
+import { TableSkeleton } from '@/components/Skeletons'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
@@ -68,7 +68,7 @@ export function ApplicationsPage() {
   function handleApplicationSaved() {
     queryClient.invalidateQueries({ queryKey: [APPLICATIONS_QUERY_KEY] })
     queryClient.invalidateQueries({ queryKey: ['application', selectedId] })
-    // Approving an application enrolls a new roster row — keep the Students
+    // Approving an application enrolls a new roster row; keep the Students
     // admin page in sync without a manual refresh.
     queryClient.invalidateQueries({ queryKey: ['students'] })
   }
@@ -157,7 +157,9 @@ export function ApplicationsPage() {
 
       <Card>
         <CardContent className="pt-6">
-          {isLoading && <Skeleton className="h-64 w-full" />}
+          {isLoading && (
+            <TableSkeleton columns={['Name', 'Email', 'Intake', 'Submitted', 'Status', 'Student #']} />
+          )}
           {data && data.applications.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">No applications match your filters.</p>
           )}
@@ -178,12 +180,12 @@ export function ApplicationsPage() {
                   <TableRow key={a.id} className="cursor-pointer" onClick={() => setSelectedId(a.id)}>
                     <TableCell className="font-medium">{a.full_name}</TableCell>
                     <TableCell className="text-muted-foreground">{a.email}</TableCell>
-                    <TableCell>{a.intake ? `Intake ${a.intake.intake_number}` : '—'}</TableCell>
+                    <TableCell>{a.intake ? `Intake ${a.intake.intake_number}` : '-'}</TableCell>
                     <TableCell className="text-muted-foreground">{new Date(a.submitted_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANT[a.status]}>{STATUS_LABEL[a.status]}</Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{a.student?.student_number ?? '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{a.student?.student_number ?? '-'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -193,7 +195,7 @@ export function ApplicationsPage() {
         </CardContent>
       </Card>
 
-      <ApplicationDetailSheet
+      <ApplicationDialog
         id={selectedId}
         onOpenChange={(open) => !open && setSelectedId(null)}
         onSaved={handleApplicationSaved}

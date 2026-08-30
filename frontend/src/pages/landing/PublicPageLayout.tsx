@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { SiteHeader, SiteFooter } from './SiteHeaderFooter'
 
 // Shared shell for the informational pages that mirror the real CMR site's
-// structure (Board Members, Research, Services, Archives, Contact) — a
+// structure (Board Members, Research, Services, Archives, Contact): a
 // title strip plus consistent header/footer, so each page only supplies
 // its own content.
 export function PublicPageLayout({

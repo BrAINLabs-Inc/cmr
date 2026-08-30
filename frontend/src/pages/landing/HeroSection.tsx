@@ -11,18 +11,18 @@ const HOME_ILLUSTRATION = '/vectors/home1.webp'
 
 function facts(intake: PublicIntake) {
   return [
-    { label: 'Duration', value: intake.duration_text ?? '—', icon: Clock },
-    { label: 'Mode', value: intake.mode_text ?? '—', icon: MapPin },
-    { label: 'Lectures', value: intake.lecture_schedule_text ?? '—', icon: Calendar },
+    { label: 'Duration', value: intake.duration_text ?? '-', icon: Clock },
+    { label: 'Mode', value: intake.mode_text ?? '-', icon: MapPin },
+    { label: 'Lectures', value: intake.lecture_schedule_text ?? '-', icon: Calendar },
   ]
 }
 
-// Calm, meditation-evoking backdrop for the hero only — a soft two-tone
+// Calm, meditation-evoking backdrop for the hero only: a soft two-tone
 // gradient wash, a faint dot-grid that fades toward the edges (a common
 // refined editorial/SaaS texture, kept subtle here rather than full-bleed),
 // and concentric "ripple" rings. Deliberately not the colourful blurred
 // blobs used elsewhere before (read as generic AI-template). No blur
-// filters, no shadows — flat vector shapes and low opacity throughout.
+// filters, no shadows; flat vector shapes and low opacity throughout.
 function MindfulnessBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -89,14 +89,14 @@ export function HeroSection({
           </p>
           {intake?.funded_by && <p className="mt-2 text-sm text-muted-foreground">Funded by {intake.funded_by}</p>}
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
-            <Button size="lg" asChild>
+          <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center lg:justify-start">
+            <Button size="lg" asChild className="w-full sm:w-auto">
               <Link to="/apply">
                 {intake && intake.status === 'open' ? 'Apply Now' : 'Applications Closed'}
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" asChild className="h-auto w-full py-2.5 whitespace-normal sm:w-auto sm:whitespace-nowrap">
               <Link to="/login">Already enrolled? Sign in to your diary</Link>
             </Button>
           </div>

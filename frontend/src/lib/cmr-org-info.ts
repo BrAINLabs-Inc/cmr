@@ -2,7 +2,7 @@
 // sourced from https://med.cmb.ac.lk/cmr/ and its sub-pages. This is
 // org-level identity (address, contact channels, mission) that changes far
 // less often than per-intake admissions content (which stays in the
-// database via the Intakes CMS — see SRS/intake-management.md). Update
+// database via the Intakes CMS; see SRS/intake-management.md). Update
 // this file by hand if CMR's contact details or leadership change.
 
 export const CMR_FULL_NAME = 'Centre for Meditation Research, Faculty of Medicine, University of Colombo'

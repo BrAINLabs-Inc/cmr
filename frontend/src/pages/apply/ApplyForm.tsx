@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
+const APPLICATION_ILLUSTRATION = '/vectors/application.webp'
+
 const MAX_DEGREE_DOCUMENTS = 5
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 const ACCEPTED_FILE_TYPES = '.pdf,.doc,.docx,image/*'
@@ -32,6 +34,19 @@ const HOW_HEARD_OPTIONS: { value: HowHeard; label: string }[] = [
   { value: 'other', label: 'Other' },
 ]
 
+type TitleOption = 'Mr' | 'Mrs' | 'Ms' | 'Miss' | 'Dr' | 'Prof' | 'Rev' | 'other'
+
+const TITLE_OPTIONS: { value: TitleOption; label: string }[] = [
+  { value: 'Mr', label: 'Mr' },
+  { value: 'Mrs', label: 'Mrs' },
+  { value: 'Ms', label: 'Ms' },
+  { value: 'Miss', label: 'Miss' },
+  { value: 'Dr', label: 'Dr' },
+  { value: 'Prof', label: 'Prof' },
+  { value: 'Rev', label: 'Rev' },
+  { value: 'other', label: 'Other' },
+]
+
 function validateFiles(files: File[], max: number): string | null {
   if (files.length === 0) return null
   if (files.length > max) return `Please select at most ${max} file${max === 1 ? '' : 's'}.`
@@ -41,7 +56,8 @@ function validateFiles(files: File[], max: number): string | null {
 }
 
 export function ApplyForm({ intake, onSubmitted }: { intake: PublicIntake; onSubmitted: (reference: string) => void }) {
-  const title = useValidatedField('')
+  const title = useValidatedField<TitleOption | ''>('' as const)
+  const titleOther = useValidatedField('', title.value === 'other' ? required('Please specify your title.') : undefined)
   const fullName = useValidatedField('', required('Full name is required.'))
   const nameWithInitials = useValidatedField('', required('Please enter your name with initials.'))
   const residentialAddress = useValidatedField('', required('Residential address is required.'))
@@ -78,6 +94,7 @@ export function ApplyForm({ intake, onSubmitted }: { intake: PublicIntake; onSub
   const [submitting, setSubmitting] = useState(false)
 
   const requiredFields = [
+    titleOther,
     fullName,
     nameWithInitials,
     residentialAddress,
@@ -136,7 +153,7 @@ export function ApplyForm({ intake, onSubmitted }: { intake: PublicIntake; onSub
     }
 
     const formData = new FormData()
-    formData.append('title', title.value)
+    formData.append('title', title.value === 'other' ? titleOther.value : title.value)
     formData.append('fullName', fullName.value)
     formData.append('nameWithInitials', nameWithInitials.value)
     formData.append('residentialAddress', residentialAddress.value)
@@ -168,14 +185,37 @@ export function ApplyForm({ intake, onSubmitted }: { intake: PublicIntake; onSub
     }
   }
 
+  const hasPaymentDetails = Boolean(
+    intake.fee_application_local ||
+      intake.fee_application_foreign ||
+      intake.payment_reference_code ||
+      intake.payment_bank_name ||
+      intake.payment_online_portal_url
+  )
+
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Apply — {intake.course_title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Intake {intake.intake_number}
-          {intake.application_closing_date && <> · Closes {intake.application_closing_date}</>}
-        </p>
+      <div className="relative overflow-hidden rounded-xl border bg-primary/5 px-6 py-8 sm:px-8">
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute inset-0 opacity-60 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:26px_26px] [mask-image:radial-gradient(ellipse_70%_60%_at_100%_0%,black,transparent)]" />
+          <div className="absolute -top-10 -right-10 size-56 rounded-full bg-primary/10 blur-3xl" />
+        </div>
+        <div className="flex items-center justify-between gap-6">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+              Apply for {intake.course_title}
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Intake {intake.intake_number}
+              {intake.application_closing_date && <> · Closes {intake.application_closing_date}</>}
+            </p>
+          </div>
+          <img
+            src={APPLICATION_ILLUSTRATION}
+            alt=""
+            className="hidden h-32 w-32 shrink-0 object-contain sm:block md:h-40 md:w-40"
+          />
+        </div>
       </div>
 
       {error && (
@@ -193,30 +233,40 @@ export function ApplyForm({ intake, onSubmitted }: { intake: PublicIntake; onSub
           <CardDescription>Please make the application fee payment before submitting, and keep your slip ready to upload.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          {intake.fee_application_local && <p>Application fee (local): {intake.fee_application_local}</p>}
-          {intake.fee_application_foreign && <p>Application fee (foreign): {intake.fee_application_foreign}</p>}
-          {intake.payment_reference_code && (
-            <p>
-              Reference / account number: <span className="font-mono font-medium">{intake.payment_reference_code}</span>
+          {hasPaymentDetails ? (
+            <>
+              {intake.fee_application_local && <p>Application fee (local): {intake.fee_application_local}</p>}
+              {intake.fee_application_foreign && <p>Application fee (foreign): {intake.fee_application_foreign}</p>}
+              {intake.payment_reference_code && (
+                <p>
+                  Reference / account number:{' '}
+                  <span className="font-mono font-medium">{intake.payment_reference_code}</span>
+                </p>
+              )}
+              {intake.payment_bank_name && (
+                <p className="flex items-center gap-1.5">
+                  <Landmark className="size-4 text-muted-foreground" />
+                  Pay at any {intake.payment_bank_name} branch
+                  {intake.payment_account_holder_name && <>, account holder: {intake.payment_account_holder_name}</>}
+                </p>
+              )}
+              {intake.payment_online_portal_url && (
+                <a
+                  href={intake.payment_online_portal_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-primary hover:underline"
+                >
+                  <ExternalLink className="size-4" />
+                  Pay online
+                </a>
+              )}
+            </>
+          ) : (
+            <p className="text-muted-foreground">
+              Payment details haven't been added for this intake yet. Please contact CMR before submitting if you're
+              unsure how to pay.
             </p>
-          )}
-          {intake.payment_bank_name && (
-            <p className="flex items-center gap-1.5">
-              <Landmark className="size-4 text-muted-foreground" />
-              Pay at any {intake.payment_bank_name} branch
-              {intake.payment_account_holder_name && <> — account holder: {intake.payment_account_holder_name}</>}
-            </p>
-          )}
-          {intake.payment_online_portal_url && (
-            <a
-              href={intake.payment_online_portal_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-primary hover:underline"
-            >
-              <ExternalLink className="size-4" />
-              Pay online
-            </a>
           )}
         </CardContent>
       </Card>
@@ -227,8 +277,30 @@ export function ApplyForm({ intake, onSubmitted }: { intake: PublicIntake; onSub
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <FormField label="Title" htmlFor="title">
-            <Input id="title" value={title.value} onChange={(e) => title.onChange(e.target.value)} placeholder="Mr / Mrs / Dr…" />
+            <Select value={title.value} onValueChange={(v) => title.onChange(v)}>
+              <SelectTrigger id="title" className="w-full">
+                <SelectValue placeholder="Select…" />
+              </SelectTrigger>
+              <SelectContent>
+                {TITLE_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </FormField>
+          {title.value === 'other' && (
+            <FormField label="Please specify" htmlFor="titleOther" required error={titleOther.error}>
+              <Input
+                id="titleOther"
+                value={titleOther.value}
+                aria-invalid={!!titleOther.error}
+                onChange={(e) => titleOther.onChange(e.target.value)}
+                onBlur={titleOther.onBlur}
+              />
+            </FormField>
+          )}
           <FormField label="Full Name (as on certificate)" htmlFor="fullName" required error={fullName.error}>
             <Input
               id="fullName"

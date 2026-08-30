@@ -118,7 +118,7 @@ export function ServicesPage() {
                 <p className="mt-3 text-lg font-semibold">Translating the Science of Happiness and Meditation into Practice</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   A six-month professional development programme (150 direct teaching hours, 10 credits) for degree
-                  holders — administrators, professionals, academics, postgraduate students, and teachers — held on
+                  holders (administrators, professionals, academics, postgraduate students, and teachers), held on
                   Saturdays, 9:00 AM–4:00 PM.
                 </p>
                 <div className="mt-4 flex items-center gap-1.5 text-sm text-muted-foreground">

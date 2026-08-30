@@ -13,7 +13,7 @@ type FormFieldProps = {
 }
 
 // Shared labeled-field wrapper for plain (non-react-hook-form) forms in this
-// app — the "<Label> + control + optional hint" shell was previously
+// app: the "<Label> + control + optional hint" shell was previously
 // duplicated across every admin/public form. Pass `error` (e.g. from
 // useValidatedField) to show live validation feedback under the control.
 export function FormField({ label, htmlFor, required, description, error, className, children }: FormFieldProps) {

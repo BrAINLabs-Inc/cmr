@@ -4,7 +4,7 @@ import type { Validator } from '@/lib/validators'
 // Gives a controlled field live validation feedback: an error only shows
 // once the field has been touched (blurred, or a submit was attempted),
 // not the instant an empty required field first renders. This is the piece
-// that was missing everywhere — forms only surfaced problems after a full
+// that was missing everywhere: forms only surfaced problems after a full
 // submit + network round trip instead of as the person types.
 export function useValidatedField<T extends string = string>(initialValue: T, validate?: Validator) {
   const [value, setValue] = useState<T>(initialValue)

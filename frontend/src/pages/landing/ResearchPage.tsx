@@ -14,7 +14,7 @@ const RESEARCH_AREAS: { title: string; description: string; icon: ComponentType<
   {
     title: 'Cellular & Molecular Research',
     description:
-      'Molecular basis of mind training — cellular signalling, neurochemical and epigenetic modifications, telomere length and telomerase activity, and circadian-rhythm gene expression (CRY1, CRY2, hTERT, hTR).',
+      'Molecular basis of mind training: cellular signalling, neurochemical and epigenetic modifications, telomere length and telomerase activity, and circadian-rhythm gene expression (CRY1, CRY2, hTERT, hTR).',
     icon: Dna,
   },
   {
@@ -35,7 +35,7 @@ const RESEARCH_AREAS: { title: string; description: string; icon: ComponentType<
   {
     title: 'Clinical Applications',
     description:
-      '"MindDM" — effects of meditation on physiological and metabolic parameters in type 2 diabetes; and studies on meditation effects on clinical outcomes in Parkinson’s disease.',
+      '"MindDM": effects of meditation on physiological and metabolic parameters in type 2 diabetes; and studies on meditation effects on clinical outcomes in Parkinson’s disease.',
     icon: Sparkles,
   },
 ]

@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom'
-import { ExternalLink, Mail, MapPin, NotebookPen, Phone } from 'lucide-react'
+import { ExternalLink, Mail, Menu, MapPin, NotebookPen, Phone } from 'lucide-react'
 import {
   CMR_ACADEMIC_PROGRAMME_URL,
   CMR_ADDRESS,
@@ -12,6 +12,7 @@ import {
   CMR_YOUTUBE_URL,
 } from '@/lib/cmr-org-info'
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import cmrLogo from '@/assets/cmr-logo.png'
 
@@ -27,7 +28,7 @@ export const PUBLIC_NAV = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
-      <div className="mx-auto grid h-16 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:grid lg:grid-cols-[1fr_auto_1fr]">
         <Link to="/" className="flex shrink-0 items-center gap-2.5 justify-self-start">
           <img src={cmrLogo} alt={CMR_SHORT_NAME} className="size-8 rounded-full" />
           <span className="hidden text-sm font-semibold tracking-tight sm:inline sm:text-base">{CMR_SHORT_NAME}</span>
@@ -52,12 +53,62 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2 justify-self-end">
-          <Button variant="ghost" asChild>
-            <Link to="/login">Sign In</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/apply">Apply Now</Link>
-          </Button>
+          <div className="hidden items-center gap-2 sm:flex">
+            <Button variant="ghost" asChild>
+              <Link to="/login">Sign In</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/apply">Apply Now</Link>
+            </Button>
+          </div>
+
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+                <Menu className="size-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="flex w-3/4 flex-col p-0 sm:max-w-xs">
+              <SheetHeader className="border-b">
+                <SheetTitle className="flex items-center gap-2.5">
+                  <img src={cmrLogo} alt="" className="size-7 rounded-full" />
+                  {CMR_SHORT_NAME}
+                </SheetTitle>
+              </SheetHeader>
+
+              <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
+                {PUBLIC_NAV.map((item) => (
+                  <SheetClose key={item.to} asChild>
+                    <NavLink
+                      to={item.to}
+                      end={item.to === '/'}
+                      className={({ isActive }) =>
+                        cn(
+                          'rounded-md px-3 py-2.5 text-base font-medium transition-colors hover:bg-muted',
+                          isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                        )
+                      }
+                    >
+                      {item.label}
+                    </NavLink>
+                  </SheetClose>
+                ))}
+              </nav>
+
+              <div className="flex flex-col gap-2 border-t p-4 sm:hidden">
+                <SheetClose asChild>
+                  <Button variant="outline" asChild>
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Button asChild>
+                    <Link to="/apply">Apply Now</Link>
+                  </Button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>

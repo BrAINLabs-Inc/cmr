@@ -6,8 +6,8 @@ const FORMULA_TRIGGER_CHARS = new Set(['=', '+', '-', '@', '\t', '\r']);
 
 // Defuses CSV/formula injection: a spreadsheet app (Excel, Sheets) treats a
 // cell starting with one of these characters as a formula, so untrusted
-// data written to a cell — anything an applicant typed into the public
-// application form ends up in an admin's export — could execute arbitrary
+// data written to a cell (anything an applicant typed into the public
+// application form ends up in an admin's export) could execute arbitrary
 // formulas when opened. Prefixing with a quote forces it to render as plain
 // text; Excel/Sheets hide the leading quote, so the visible value is
 // unchanged for ordinary values.

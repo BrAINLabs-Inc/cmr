@@ -8,10 +8,10 @@ export const STATUS_LABEL: Record<ApplicationStatus, string> = {
   waitlisted: 'Waitlisted',
 }
 
-export const STATUS_VARIANT: Record<ApplicationStatus, 'default' | 'outline' | 'secondary'> = {
+export const STATUS_VARIANT: Record<ApplicationStatus, 'default' | 'outline' | 'secondary' | 'destructive'> = {
   submitted: 'outline',
   under_review: 'secondary',
   approved: 'default',
-  rejected: 'outline',
+  rejected: 'destructive',
   waitlisted: 'secondary',
 }
