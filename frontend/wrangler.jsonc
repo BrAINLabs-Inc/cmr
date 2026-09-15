@@ -1,0 +1,16 @@
+{
+  // Deploys the Vite static build (frontend/dist) as a Cloudflare Workers
+  // static-assets site. The backend API is not deployed here — it keeps
+  // running wherever it runs today; the frontend just needs VITE_API_URL
+  // (set at build time, see frontend/.env.example) pointing at it.
+  "name": "cmr-diary-frontend",
+  "compatibility_date": "2026-08-29",
+  "assets": {
+    "directory": "./dist",
+    // React Router uses client-side routing, so a hard refresh on e.g.
+    // /apply or /admin/students has no matching static file. Without this,
+    // Cloudflare would 404 those instead of serving index.html and letting
+    // the client-side router take over.
+    "not_found_handling": "single-page-application"
+  }
+}

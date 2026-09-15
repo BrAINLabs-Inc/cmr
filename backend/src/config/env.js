@@ -10,6 +10,11 @@ const schema = z.object({
   CORS_ORIGIN: z.string().optional().default(''),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
+  SKIP_STORAGE_UPLOAD: z
+    .string()
+    .optional()
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 const parsed = schema.safeParse(process.env);

@@ -8,11 +8,11 @@ import { cn } from '@/lib/utils'
 import { MOOD_LABELS, moodClassName, moodIcon } from '@/lib/mood'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ChartSkeleton, MetricTileSkeleton, StatCardSkeleton } from '@/components/Skeletons'
 
 type CourseSettings = {
   total_weeks: number
-  intake_label: string | null
+  intake: { intake_number: number } | null
 }
 
 type StatsOverview = {
@@ -109,7 +109,7 @@ function WeeklyTrendChart({ overview }: { overview: StatsOverview }) {
   )
 }
 
-export function AdminDashboardPage() {
+export function DashboardPage() {
   const { profile } = useAuth()
   const admin = profile as Admin
   const [week, setWeek] = useState<number | null>(null)
@@ -147,7 +147,7 @@ export function AdminDashboardPage() {
             </h1>
             <p className="text-sm text-muted-foreground">
               Submission overview across the cohort
-              {settings?.settings.intake_label ? ` (${settings.settings.intake_label})` : ''}.
+              {settings?.settings.intake ? ` (Intake ${settings.settings.intake.intake_number})` : ''}.
             </p>
           </div>
         </div>
@@ -167,10 +167,10 @@ export function AdminDashboardPage() {
 
       {isLoading || !stats ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
         </div>
       ) : (
         <>
@@ -210,11 +210,7 @@ export function AdminDashboardPage() {
               <CardDescription>Percentage of active students submitted, week over week.</CardDescription>
             </CardHeader>
             <CardContent>
-              {overviewLoading || !overview ? (
-                <Skeleton className="h-52 w-full" />
-              ) : (
-                <WeeklyTrendChart overview={overview} />
-              )}
+              {overviewLoading || !overview ? <ChartSkeleton /> : <WeeklyTrendChart overview={overview} />}
             </CardContent>
           </Card>
 
@@ -228,7 +224,11 @@ export function AdminDashboardPage() {
             </CardHeader>
             <CardContent>
               {checkinStatsLoading || !checkinStats ? (
-                <Skeleton className="h-24 w-full" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <MetricTileSkeleton />
+                  <MetricTileSkeleton />
+                  <MetricTileSkeleton />
+                </div>
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div className="rounded-lg border bg-muted/30 px-4 py-3">

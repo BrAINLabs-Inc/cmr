@@ -66,6 +66,22 @@ export const courseSettingsPatchSchema = z
   .object({
     courseStartDate: z.string().date().optional(),
     courseEndDate: z.string().date().optional(),
-    intakeLabel: z.string().trim().max(100).optional(),
+    intakeId: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'No fields to update' });
+
+export const lateAccessParamSchema = z.object({
+  id: z.string().uuid(),
+  week: z.coerce.number().int().min(1).max(104),
+});
+
+export const lateAccessBodySchema = z.object({
+  allowed: z.boolean(),
+  note: z.string().trim().max(500).optional(),
+});
+
+export const missedEntriesQuerySchema = z.object({
+  week: z.coerce.number().int().min(1).max(104).optional(),
+  q: z.string().trim().max(200).optional(),
+  ...pagination,
+});

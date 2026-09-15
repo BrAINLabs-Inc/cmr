@@ -16,3 +16,11 @@ export const registerLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Too many registration attempts. Please try again later.' },
 });
+
+export const applicationLimiter = rateLimit({
+  windowMs: 60 * 60_000,
+  max: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many application submissions from this network. Please try again later.' },
+});

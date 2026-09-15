@@ -3,11 +3,10 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { JSONContent } from '@tiptap/core'
-import { AlertTriangle, CheckCircle2, Loader2, Lock, ShieldOff, Trash2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Loader2, Lock, Trash2 } from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import type { DiaryEntry } from '@/lib/types'
 import { EMPTY_DOC } from '@/lib/tiptap'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { DiaryEditor } from '@/components/DiaryEditor'
 import { Badge } from '@/components/ui/badge'
@@ -23,19 +22,23 @@ export function DiaryWritePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['diary', week],
-    queryFn: () => api.get<{ entry: DiaryEntry; currentWeek: number }>(`/diary/${week}`),
+    queryFn: () => api.get<{ entry: DiaryEntry; currentWeek: number; hasLateAccess?: boolean }>(`/diary/${week}`),
+    // Write access here can change out-of-band (an admin granting late access,
+    // or the course week rolling over), so cached "locked" state must never
+    // linger past a fresh visit to this page.
+    staleTime: 0,
   })
 
   const loadedEntry = data?.entry
   const isSubmitted = loadedEntry?.status === 'submitted'
-  const isLocked = !isSubmitted && data !== undefined && Number(week) !== data.currentWeek
+  const isLocked =
+    !isSubmitted && data !== undefined && Number(week) !== data.currentWeek && !data.hasLateAccess
   const readOnly = isSubmitted || isLocked
 
   const latestContent = useRef<JSONContent>(EMPTY_DOC)
   const [words, setWords] = useState(0)
-  const [researchOptOut, setResearchOptOut] = useState(false)
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -47,18 +50,16 @@ export function DiaryWritePage() {
   useEffect(() => {
     if (loadedEntry) {
       setWords(loadedEntry.word_count)
-      setResearchOptOut(loadedEntry.research_opt_out ?? false)
     }
   }, [loadedEntry])
 
-  async function saveDraft(silent = false, optOutOverride?: boolean) {
+  async function saveDraft(silent = false) {
     if (!week || readOnly) return
     const seq = ++saveSeq.current
     setSaving(true)
     try {
       const { entry } = await api.put<{ entry: DiaryEntry }>(`/diary/${week}`, {
         content: latestContent.current,
-        researchOptOut: optOutOverride ?? researchOptOut,
       })
       setLastSavedAt(new Date())
       // Only the most recently *sent* save is allowed to update the cached
@@ -87,12 +88,6 @@ export function DiaryWritePage() {
     autosaveTimer.current = setTimeout(() => saveDraft(true), 4000)
   }
 
-  function toggleResearchOptOut() {
-    const next = !researchOptOut
-    setResearchOptOut(next)
-    saveDraft(true, next)
-  }
-
   async function handleSubmit() {
     if (!week) return
     if (words === 0) {
@@ -103,7 +98,6 @@ export function DiaryWritePage() {
     try {
       const { entry } = await api.post<{ entry: DiaryEntry }>(`/diary/${week}/submit`, {
         content: latestContent.current,
-        researchOptOut,
       })
       queryClient.setQueryData<{ entry: DiaryEntry; currentWeek: number }>(['diary', week], (old) =>
         old ? { ...old, entry } : old
@@ -136,10 +130,30 @@ export function DiaryWritePage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-10 w-72" />
-        <Skeleton className="h-96 w-full" />
+      <div className="flex flex-col gap-6 pb-16">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <Skeleton className="h-14 w-full rounded-lg" />
+        <div className="space-y-3 rounded-lg border p-4">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+        <p>{error instanceof ApiError ? error.message : 'Could not load this diary entry.'}</p>
       </div>
     )
   }
@@ -174,6 +188,12 @@ export function DiaryWritePage() {
             <Badge variant="outline" className="gap-1 border-destructive/30 text-destructive">
               <AlertTriangle className="size-3.5" />
               Missed: deadline passed
+            </Badge>
+          )}
+          {!isSubmitted && data?.hasLateAccess && (
+            <Badge variant="outline" className="gap-1 border-primary/30 text-primary">
+              <CheckCircle2 className="size-3.5" />
+              Late submission approved
             </Badge>
           )}
         </div>
@@ -211,43 +231,6 @@ export function DiaryWritePage() {
           onUpdate={handleEditorUpdate}
         />
       )}
-
-      <div
-        className={cn(
-          'flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-4 py-3',
-          readOnly && 'opacity-70'
-        )}
-      >
-        <div className="flex items-center gap-2.5">
-          <ShieldOff className="size-4 shrink-0 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Exclude from research</p>
-            <p className="text-xs text-muted-foreground">
-              If CMR uses diary data for research, this entry won't be included.
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={researchOptOut}
-          disabled={readOnly}
-          onClick={toggleResearchOptOut}
-          className={cn(
-            'relative h-6 w-11 shrink-0 rounded-full transition-colors',
-            researchOptOut ? 'bg-primary' : 'bg-muted-foreground/30',
-            !readOnly && 'cursor-pointer',
-            readOnly && 'pointer-events-none'
-          )}
-        >
-          <span
-            className={cn(
-              'absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform',
-              researchOptOut && 'translate-x-5'
-            )}
-          />
-        </button>
-      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
         <span className="text-sm text-muted-foreground">{words} words</span>

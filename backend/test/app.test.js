@@ -20,6 +20,13 @@ describe('auth guarding', () => {
     const res = await request(app).get('/api/admin/students');
     expect(res.status).toBe(401);
   });
+
+  it('rejects admin sub-resource routes (intakes, applications) with no bearer token', async () => {
+    const intakes = await request(app).get('/api/admin/intakes');
+    const applications = await request(app).get('/api/admin/applications');
+    expect(intakes.status).toBe(401);
+    expect(applications.status).toBe(401);
+  });
 });
 
 describe('request validation', () => {

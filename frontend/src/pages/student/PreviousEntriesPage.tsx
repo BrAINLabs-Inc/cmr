@@ -8,12 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
+import { TableSkeleton } from '@/components/Skeletons'
 
 export function PreviousEntriesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['weeks'],
     queryFn: () => api.get<WeeksResponse>('/diary/weeks'),
+    // Week status can change out-of-band (admin starts the diary, grants
+    // late access, or the week rolls over), so always refetch on visit.
+    staleTime: 0,
   })
 
   const openWeeks = data?.weeks.filter((w) => w.isOpen) ?? []
@@ -49,7 +52,7 @@ export function PreviousEntriesPage() {
           <CardDescription>Submitted entries are read-only; drafts and open weeks can still be written.</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading && <Skeleton className="h-64 w-full" />}
+          {isLoading && <TableSkeleton columns={['Week', 'Date Submitted', 'Status', 'Action']} />}
           {data && openWeeks.length === 0 && (
             <p className="py-8 text-center text-sm text-muted-foreground">No weeks have opened yet.</p>
           )}

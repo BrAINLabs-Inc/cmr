@@ -16,8 +16,9 @@ export async function getCourseSettings() {
   return unwrap(await supabaseAdmin.from('course_settings').select('*').eq('id', 1).single());
 }
 
-export function assertWeekIsOpen(week, currentWeek) {
+export function assertWeekIsOpen(week, currentWeek, lateAccessAllowed = false) {
   if (week === currentWeek) return;
+  if (lateAccessAllowed && week < currentWeek) return;
   throw new AppError(
     403,
     week < currentWeek
@@ -26,22 +27,56 @@ export function assertWeekIsOpen(week, currentWeek) {
   );
 }
 
+export function assertDiaryStarted(settings) {
+  if (!settings.is_started) {
+    throw new AppError(403, 'The diary has not been started yet. Please wait for admin approval.');
+  }
+}
+
+export async function hasLateAccess(studentId, week) {
+  const grant = unwrap(
+    await supabaseAdmin
+      .from('diary_late_access')
+      .select('allowed')
+      .eq('student_id', studentId)
+      .eq('week_number', week)
+      .maybeSingle()
+  );
+  return grant?.allowed === true;
+}
+
 diaryRouter.get('/weeks', async (req, res) => {
   const settings = await getCourseSettings();
+
+  if (!settings.is_started) {
+    return res.json({ diaryStarted: false, currentWeek: 0, totalWeeks: settings.total_weeks, weeks: [] });
+  }
+
   const current = currentWeekNumber(settings);
 
-  const entries = unwrap(
-    await supabaseAdmin
-      .from('diary_entries')
-      .select('week_number, status, entry_date, submitted_at, word_count')
-      .eq('student_id', req.student.id)
-  );
+  const [entries, lateAccessGrants] = await Promise.all([
+    unwrap(
+      await supabaseAdmin
+        .from('diary_entries')
+        .select('week_number, status, entry_date, submitted_at, word_count')
+        .eq('student_id', req.student.id)
+    ),
+    unwrap(
+      await supabaseAdmin
+        .from('diary_late_access')
+        .select('week_number, allowed')
+        .eq('student_id', req.student.id)
+        .eq('allowed', true)
+    ),
+  ]);
 
   const byWeek = new Map(entries.map((e) => [e.week_number, e]));
+  const lateAccessWeeks = new Set(lateAccessGrants.map((g) => g.week_number));
   const weeks = Array.from({ length: settings.total_weeks }, (_, i) => {
     const weekNumber = i + 1;
     const entry = byWeek.get(weekNumber);
     const status = entry?.status ?? 'not_started';
+    const lateAccess = weekNumber < current && lateAccessWeeks.has(weekNumber);
     return {
       weekNumber,
       status,
@@ -49,18 +84,21 @@ diaryRouter.get('/weeks', async (req, res) => {
       wordCount: entry?.word_count ?? 0,
       isCurrent: weekNumber === current,
       isOpen: weekNumber <= current,
-      isLocked: weekNumber < current && status !== 'submitted',
+      isLocked: weekNumber < current && status !== 'submitted' && !lateAccess,
+      hasLateAccess: lateAccess,
       dueDate: weekDueDate(settings.course_start_date, weekNumber),
     };
   });
 
-  res.json({ currentWeek: current, totalWeeks: settings.total_weeks, weeks });
+  res.json({ diaryStarted: true, currentWeek: current, totalWeeks: settings.total_weeks, weeks });
 });
 
 diaryRouter.get('/:week', validate(weekParamSchema, 'params'), async (req, res) => {
   const { week } = req.params;
   const settings = await getCourseSettings();
+  assertDiaryStarted(settings);
   const currentWeek = currentWeekNumber(settings);
+  const hasLateAccessGrant = week < currentWeek ? await hasLateAccess(req.student.id, week) : false;
 
   const entry = unwrap(
     await supabaseAdmin
@@ -71,7 +109,7 @@ diaryRouter.get('/:week', validate(weekParamSchema, 'params'), async (req, res) 
       .maybeSingle()
   );
 
-  if (entry) return res.json({ entry, currentWeek });
+  if (entry) return res.json({ entry, currentWeek, hasLateAccess: hasLateAccessGrant });
 
   res.json({
     entry: {
@@ -85,10 +123,11 @@ diaryRouter.get('/:week', validate(weekParamSchema, 'params'), async (req, res) 
       research_opt_out: false,
     },
     currentWeek,
+    hasLateAccess: hasLateAccessGrant,
   });
 });
 
-async function upsertEntry({ studentId, week, content, researchOptOut, status }) {
+async function upsertEntry({ studentId, week, content, status }) {
   const now = new Date().toISOString();
   const payload = {
     student_id: studentId,
@@ -97,7 +136,6 @@ async function upsertEntry({ studentId, week, content, researchOptOut, status })
     word_count: wordCount(extractPlainText(content)),
     status,
     entry_date: new Date().toISOString().slice(0, 10),
-    ...(researchOptOut !== undefined ? { research_opt_out: researchOptOut } : {}),
     ...(status === 'submitted' ? { submitted_at: now } : {}),
   };
 
@@ -121,13 +159,16 @@ diaryRouter.put(
   validate(diaryContentSchema, 'body'),
   async (req, res) => {
     const { week } = req.params;
-    const { content, researchOptOut } = req.body;
+    const { content } = req.body;
 
     const settings = await getCourseSettings();
-    assertWeekIsOpen(week, currentWeekNumber(settings));
+    assertDiaryStarted(settings);
+    const currentWeek = currentWeekNumber(settings);
+    const lateAccess = week < currentWeek ? await hasLateAccess(req.student.id, week) : false;
+    assertWeekIsOpen(week, currentWeek, lateAccess);
     await assertNotSubmitted(req.student.id, week);
 
-    const entry = await upsertEntry({ studentId: req.student.id, week, content, researchOptOut, status: 'draft' });
+    const entry = await upsertEntry({ studentId: req.student.id, week, content, status: 'draft' });
     res.json({ entry });
   }
 );
@@ -138,17 +179,20 @@ diaryRouter.post(
   validate(diaryContentSchema, 'body'),
   async (req, res) => {
     const { week } = req.params;
-    const { content, researchOptOut } = req.body;
+    const { content } = req.body;
 
     if (extractPlainText(content).trim() === '') {
       throw new AppError(400, 'Diary content cannot be empty');
     }
 
     const settings = await getCourseSettings();
-    assertWeekIsOpen(week, currentWeekNumber(settings));
+    assertDiaryStarted(settings);
+    const currentWeek = currentWeekNumber(settings);
+    const lateAccess = week < currentWeek ? await hasLateAccess(req.student.id, week) : false;
+    assertWeekIsOpen(week, currentWeek, lateAccess);
     await assertNotSubmitted(req.student.id, week);
 
-    const entry = await upsertEntry({ studentId: req.student.id, week, content, researchOptOut, status: 'submitted' });
+    const entry = await upsertEntry({ studentId: req.student.id, week, content, status: 'submitted' });
     res.json({ entry });
   }
 );
@@ -157,7 +201,10 @@ diaryRouter.delete('/:week', validate(weekParamSchema, 'params'), async (req, re
   const { week } = req.params;
 
   const settings = await getCourseSettings();
-  assertWeekIsOpen(week, currentWeekNumber(settings));
+  assertDiaryStarted(settings);
+  const currentWeek = currentWeekNumber(settings);
+  const lateAccess = week < currentWeek ? await hasLateAccess(req.student.id, week) : false;
+  assertWeekIsOpen(week, currentWeek, lateAccess);
   await assertNotSubmitted(req.student.id, week);
 
   await unwrap(

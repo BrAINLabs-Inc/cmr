@@ -3,11 +3,14 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { PageLoading } from '@/components/PageLoading'
-import { LandingPage } from '@/pages/LandingPage'
+import { LandingPage } from '@/pages/landing/LandingPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { ApplyPage } from '@/pages/ApplyPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
+
+const PracticePage = lazy(() => import('@/pages/landing/PracticePage').then((m) => ({ default: m.PracticePage })))
 
 const DashboardPage = lazy(() => import('@/pages/student/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const DiaryWritePage = lazy(() => import('@/pages/student/DiaryWritePage').then((m) => ({ default: m.DiaryWritePage })))
@@ -16,20 +19,14 @@ const PreviousEntriesPage = lazy(() =>
 )
 const HelpPage = lazy(() => import('@/pages/student/HelpPage').then((m) => ({ default: m.HelpPage })))
 const CheckinPage = lazy(() => import('@/pages/student/CheckinPage').then((m) => ({ default: m.CheckinPage })))
-const AdminDashboardPage = lazy(() =>
-  import('@/pages/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage }))
-)
-const AdminStudentsPage = lazy(() =>
-  import('@/pages/admin/AdminStudentsPage').then((m) => ({ default: m.AdminStudentsPage }))
-)
-const AdminEntriesPage = lazy(() =>
-  import('@/pages/admin/AdminEntriesPage').then((m) => ({ default: m.AdminEntriesPage }))
-)
-const AdminCheckinsPage = lazy(() =>
-  import('@/pages/admin/AdminCheckinsPage').then((m) => ({ default: m.AdminCheckinsPage }))
-)
-const AdminSettingsPage = lazy(() =>
-  import('@/pages/admin/AdminSettingsPage').then((m) => ({ default: m.AdminSettingsPage }))
+const AdminDashboardPage = lazy(() => import('@/pages/admin/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const AdminStudentsPage = lazy(() => import('@/pages/admin/StudentsPage').then((m) => ({ default: m.StudentsPage })))
+const AdminEntriesPage = lazy(() => import('@/pages/admin/EntriesPage').then((m) => ({ default: m.EntriesPage })))
+const AdminCheckinsPage = lazy(() => import('@/pages/admin/CheckinsPage').then((m) => ({ default: m.CheckinsPage })))
+const AdminSettingsPage = lazy(() => import('@/pages/admin/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const AdminIntakesPage = lazy(() => import('@/pages/admin/IntakesPage').then((m) => ({ default: m.IntakesPage })))
+const AdminApplicationsPage = lazy(() =>
+  import('@/pages/admin/ApplicationsPage').then((m) => ({ default: m.ApplicationsPage }))
 )
 
 export default function App() {
@@ -39,6 +36,10 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/apply" element={<ApplyPage />} />
+        <Route path="/practice" element={<PracticePage />} />
+        {/* Board Members / Research / Services / Archives / Contact are temporarily down.
+            Those sections now link out to https://med.cmb.ac.lk/cmr/ instead. */}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
@@ -58,6 +59,8 @@ export default function App() {
             <Route path="/admin/students" element={<AdminStudentsPage />} />
             <Route path="/admin/entries" element={<AdminEntriesPage />} />
             <Route path="/admin/checkins" element={<AdminCheckinsPage />} />
+            <Route path="/admin/intakes" element={<AdminIntakesPage />} />
+            <Route path="/admin/applications" element={<AdminApplicationsPage />} />
             <Route path="/admin/settings" element={<AdminSettingsPage />} />
           </Route>
         </Route>
