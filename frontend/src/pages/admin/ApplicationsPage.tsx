@@ -6,6 +6,7 @@ import { api, downloadExport } from '@/lib/api'
 import type { ApplicationSummary } from '@/lib/types'
 import { useAdminIntakes } from '@/hooks/use-admin-intakes'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { usePageClamp } from '@/hooks/use-page-clamp'
 import { STATUS_LABEL, STATUS_VARIANT } from './applications/constants'
 import { ApplicationDialog } from './applications/ApplicationDialog'
 import { Pagination } from '@/components/Pagination'
@@ -49,6 +50,8 @@ export function ApplicationsPage() {
     queryKey: [APPLICATIONS_QUERY_KEY, debouncedSearch, page, intakeId, status],
     queryFn: () => api.get<{ applications: ApplicationSummary[]; total: number }>(`/admin/applications?${params.toString()}`),
   })
+
+  usePageClamp(page, setPage, data?.total, PAGE_SIZE)
 
   function handleFilterChange() {
     setPage(1)

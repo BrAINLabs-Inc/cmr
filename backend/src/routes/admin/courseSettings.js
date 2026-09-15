@@ -31,8 +31,40 @@ courseSettingsRouter.patch('/course-settings', validate(courseSettingsPatchSchem
   if (courseEndDate) patch.course_end_date = courseEndDate;
   if (intakeId !== undefined) patch.intake_id = intakeId;
 
+  // Changing the window invalidates any earlier admin approval: the new
+  // dates need their own explicit "start" confirmation before students can
+  // write into them.
+  if (Object.keys(patch).length > 0) {
+    patch.is_started = false;
+    patch.started_at = null;
+  }
+
   const settings = unwrap(
     await supabaseAdmin.from('course_settings').update(patch).eq('id', 1).select(COURSE_SETTINGS_COLUMNS).single()
+  );
+  res.json({ settings });
+});
+
+courseSettingsRouter.post('/course-settings/start', async (req, res) => {
+  const settings = unwrap(
+    await supabaseAdmin
+      .from('course_settings')
+      .update({ is_started: true, started_at: new Date().toISOString() })
+      .eq('id', 1)
+      .select(COURSE_SETTINGS_COLUMNS)
+      .single()
+  );
+  res.json({ settings });
+});
+
+courseSettingsRouter.post('/course-settings/pause', async (req, res) => {
+  const settings = unwrap(
+    await supabaseAdmin
+      .from('course_settings')
+      .update({ is_started: false, started_at: null })
+      .eq('id', 1)
+      .select(COURSE_SETTINGS_COLUMNS)
+      .single()
   );
   res.json({ settings });
 });

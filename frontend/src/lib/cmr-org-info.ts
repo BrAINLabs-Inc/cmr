@@ -23,7 +23,7 @@ export const CMR_MISSION =
 
 export const CMR_ABOUT_PARAGRAPHS = [
   'CMR grew out of a University of Colombo meditation research project originally funded by the World Bank, which studied experienced meditators from Buddhist meditation centres across Sri Lanka. It now conducts multidisciplinary research into the genetic, physical, psychological, and behavioural changes associated with meditation, and develops meditation-based intervention protocols.',
-  'The Centre facilitates training sessions, courses, and collaborative projects with national and international institutions, and promotes evidence-based policy change for public health. Its work is funded primarily by the Rekhi Foundation for Happiness, with SLIIT as a collaborative partner.',
+  'The Centre facilitates training sessions, courses, and collaborative projects with national and international institutions, and promotes evidence-based policy change for public health. Its work is funded primarily by the Rekhi Foundation for Happiness, with SLIIT, IMU Malaysia, and Harvard Medical School as collaborating partners.',
 ]
 
 export const CMR_DIRECTOR = 'Prof. Dilshani Dissanayake'

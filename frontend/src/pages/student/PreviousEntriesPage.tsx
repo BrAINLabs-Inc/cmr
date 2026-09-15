@@ -14,6 +14,9 @@ export function PreviousEntriesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['weeks'],
     queryFn: () => api.get<WeeksResponse>('/diary/weeks'),
+    // Week status can change out-of-band (admin starts the diary, grants
+    // late access, or the week rolls over), so always refetch on visit.
+    staleTime: 0,
   })
 
   const openWeeks = data?.weeks.filter((w) => w.isOpen) ?? []

@@ -6,6 +6,7 @@ import { api, ApiError } from '@/lib/api'
 import type { CheckinResponse, CheckinWeeksResponse, DiaryCheckin, MeditationStats } from '@/lib/types'
 import { WeeklyCheckin } from '@/components/WeeklyCheckin'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -111,14 +112,22 @@ function PastCheckinDialog({
 
   return (
     <Dialog open={week !== null} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <HeartHandshake className="size-4 text-primary" />
+      <DialogContent className="flex h-[85vh] w-[min(96vw,64rem)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none sm:w-[min(92vw,64rem)]">
+        <DialogHeader className="shrink-0 border-b px-6 py-4">
+          <DialogTitle className="flex flex-wrap items-center gap-2 text-lg">
+            <HeartHandshake className="size-5 text-primary" />
             Week {week} Check-in
+            {data?.checkin.meditation?.practiced && (
+              <Badge className="gap-1">
+                <CheckCircle2 className="size-3.5" />
+                Meditated
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
-        {data ? <WeeklyCheckin value={data.checkin} onChange={() => {}} disabled /> : <WeeklyCheckinSkeleton />}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {data ? <WeeklyCheckin value={data.checkin} onChange={() => {}} disabled /> : <WeeklyCheckinSkeleton />}
+        </div>
       </DialogContent>
     </Dialog>
   )

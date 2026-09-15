@@ -16,40 +16,62 @@ import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger 
 import { cn } from '@/lib/utils'
 import cmrLogo from '@/assets/cmr-logo.png'
 
+// Board Members / Research / Services / Archives / Contact are temporarily
+// down on this site, so those nav entries point out to the live pages on
+// med.cmb.ac.lk instead of local routes.
 export const PUBLIC_NAV = [
-  { label: 'Home', to: '/' },
-  { label: 'Board Members', to: '/board-members' },
-  { label: 'Research', to: '/research' },
-  { label: 'Services', to: '/services' },
-  { label: 'Archives', to: '/archives' },
-  { label: 'Contact', to: '/contact' },
-]
+  { label: 'Home', to: '/', external: false },
+  { label: 'Practice', to: '/practice', external: false },
+  { label: 'Board Members', to: 'https://med.cmb.ac.lk/cmr/board-members/', external: true },
+  { label: 'Research', to: 'https://med.cmb.ac.lk/cmr/research/', external: true },
+  { label: 'Services', to: 'https://med.cmb.ac.lk/cmr/services/', external: true },
+  { label: 'Archives', to: 'https://med.cmb.ac.lk/cmr/archives/', external: true },
+  { label: 'Contact', to: 'https://med.cmb.ac.lk/cmr/contacts-2/', external: true },
+] as const
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:grid lg:grid-cols-[1fr_auto_1fr]">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 xl:grid xl:grid-cols-[1fr_auto_1fr]">
         <Link to="/" className="flex shrink-0 items-center gap-2.5 justify-self-start">
           <img src={cmrLogo} alt={CMR_SHORT_NAME} className="size-8 rounded-full" />
           <span className="hidden text-sm font-semibold tracking-tight sm:inline sm:text-base">{CMR_SHORT_NAME}</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 justify-self-center lg:flex">
-          {PUBLIC_NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) =>
-                cn(
-                  'text-sm font-medium whitespace-nowrap transition-colors hover:text-foreground',
-                  isActive ? 'text-foreground' : 'text-muted-foreground'
-                )
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+        {/* Full inline nav only appears from xl: seven items plus the brand
+            name and both header buttons don't reliably fit at lg, so
+            everything below xl falls back to the menu sheet instead of
+            risking an overflowing header row. flex-wrap is a cheap safety
+            net in case it's ever still tight right at that breakpoint. */}
+        <nav className="hidden flex-wrap items-center gap-5 justify-self-center xl:flex">
+          {PUBLIC_NAV.map((item) =>
+            item.external ? (
+              <a
+                key={item.to}
+                href={item.to}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {item.label}
+                <ExternalLink className="size-3" />
+              </a>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end
+                className={({ isActive }) =>
+                  cn(
+                    'text-sm font-medium whitespace-nowrap transition-colors hover:text-foreground',
+                    isActive ? 'text-foreground' : 'text-muted-foreground'
+                  )
+                }
+              >
+                {item.label}
+              </NavLink>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-2 justify-self-end">
@@ -64,7 +86,7 @@ export function SiteHeader() {
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu">
+              <Button variant="ghost" size="icon" className="xl:hidden" aria-label="Open menu">
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
@@ -77,22 +99,36 @@ export function SiteHeader() {
               </SheetHeader>
 
               <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
-                {PUBLIC_NAV.map((item) => (
-                  <SheetClose key={item.to} asChild>
-                    <NavLink
-                      to={item.to}
-                      end={item.to === '/'}
-                      className={({ isActive }) =>
-                        cn(
-                          'rounded-md px-3 py-2.5 text-base font-medium transition-colors hover:bg-muted',
-                          isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
-                        )
-                      }
-                    >
-                      {item.label}
-                    </NavLink>
-                  </SheetClose>
-                ))}
+                {PUBLIC_NAV.map((item) =>
+                  item.external ? (
+                    <SheetClose key={item.to} asChild>
+                      <a
+                        href={item.to}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 rounded-md px-3 py-2.5 text-base font-medium text-muted-foreground transition-colors hover:bg-muted"
+                      >
+                        {item.label}
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </SheetClose>
+                  ) : (
+                    <SheetClose key={item.to} asChild>
+                      <NavLink
+                        to={item.to}
+                        end
+                        className={({ isActive }) =>
+                          cn(
+                            'rounded-md px-3 py-2.5 text-base font-medium transition-colors hover:bg-muted',
+                            isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+                          )
+                        }
+                      >
+                        {item.label}
+                      </NavLink>
+                    </SheetClose>
+                  )
+                )}
               </nav>
 
               <div className="flex flex-col gap-2 border-t p-4 sm:hidden">
@@ -161,11 +197,24 @@ export function SiteFooter({
 
           <div className="flex flex-col gap-1.5 text-sm">
             <p className="mb-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Explore</p>
-            {PUBLIC_NAV.filter((item) => item.to !== '/').map((item) => (
-              <Link key={item.to} to={item.to} className="text-muted-foreground hover:text-foreground">
-                {item.label}
-              </Link>
-            ))}
+            {PUBLIC_NAV.filter((item) => item.to !== '/').map((item) =>
+              item.external ? (
+                <a
+                  key={item.to}
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                >
+                  {item.label}
+                  <ExternalLink className="size-3" />
+                </a>
+              ) : (
+                <Link key={item.to} to={item.to} className="text-muted-foreground hover:text-foreground">
+                  {item.label}
+                </Link>
+              )
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5 text-sm">

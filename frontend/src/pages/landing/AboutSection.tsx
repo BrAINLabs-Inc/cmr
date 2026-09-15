@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import {
   CMR_ABOUT_PARAGRAPHS,
@@ -11,6 +10,15 @@ import {
 import { Button } from '@/components/ui/button'
 import { CardContent } from '@/components/ui/card'
 import { HoverCard, PersonChip, SectionHeading } from './shared'
+import sliitLogo from '@/assets/partners/sliit-logo.svg'
+import imuLogo from '@/assets/partners/imu-university-logo.png'
+import harvardLogo from '@/assets/partners/harvard-medical-school-shield.png'
+
+const COLLABORATING_PARTNERS = [
+  { name: 'SLIIT', logo: sliitLogo },
+  { name: 'IMU Malaysia', logo: imuLogo },
+  { name: 'Harvard Medical School', logo: harvardLogo },
+]
 
 export function AboutSection() {
   return (
@@ -34,14 +42,30 @@ export function AboutSection() {
         <div className="mt-8 flex flex-col items-start justify-between gap-6 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-center">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
             <PersonChip name={CMR_DIRECTOR} role="Director" photo={CMR_DIRECTOR_PHOTO} />
-            <PersonChip name={CMR_DEAN} role="Dean, Faculty of Medicine" photo={CMR_DEAN_PHOTO} />
+            <PersonChip name={CMR_DEAN} role="Senior Advisory Board Member" photo={CMR_DEAN_PHOTO} />
           </div>
           <Button variant="outline" asChild className="w-full sm:w-auto">
-            <Link to="/board-members">
+            <a href="https://med.cmb.ac.lk/cmr/board-members/" target="_blank" rel="noopener noreferrer">
               Meet the Board
               <ArrowRight className="size-4" />
-            </Link>
+            </a>
           </Button>
+        </div>
+
+        <div className="mt-10">
+          <p className="text-center text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            Collaborating Partners
+          </p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-4">
+            {COLLABORATING_PARTNERS.map((partner) => (
+              <div
+                key={partner.name}
+                className="flex h-16 w-32 items-center justify-center rounded-lg border bg-white p-3 sm:w-36"
+              >
+                <img src={partner.logo} alt={partner.name} title={partner.name} className="max-h-full max-w-full object-contain" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

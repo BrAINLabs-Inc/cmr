@@ -31,7 +31,7 @@ function StatusSplitCard({ tone = 'success', children }: { tone?: 'success' | 'c
       <div className="grid md:grid-cols-2">
         <div
           className={cn(
-            'relative hidden items-center justify-center overflow-hidden p-10 md:flex',
+            'relative hidden items-center justify-center overflow-hidden p-6 md:flex',
             isClosed ? 'bg-amber-500/5' : 'bg-primary/5'
           )}
         >
@@ -41,13 +41,13 @@ function StatusSplitCard({ tone = 'success', children }: { tone?: 'success' | 'c
           />
           <div
             aria-hidden
-            className={cn('absolute inset-10 -z-10 rounded-full blur-3xl', isClosed ? 'bg-amber-500/10' : 'bg-primary/10')}
+            className={cn('absolute inset-6 -z-10 rounded-full blur-3xl', isClosed ? 'bg-amber-500/10' : 'bg-primary/10')}
           />
           <div className="relative">
             <img
               src={APPLICATION_ILLUSTRATION}
               alt=""
-              className={cn('w-full max-w-[320px] object-contain', isClosed && 'opacity-75 grayscale')}
+              className={cn('w-full max-w-[480px] object-contain', isClosed && 'opacity-75 grayscale')}
             />
             {isClosed && (
               <span className="absolute -right-1 -bottom-1 flex size-12 items-center justify-center rounded-full border-4 border-card bg-amber-500 text-white shadow-sm">
@@ -76,8 +76,8 @@ export function ApplyPage() {
 
   return (
     <div className="flex min-h-svh flex-col bg-muted/40">
-      <header className="border-b bg-background">
-        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2.5">
             <img src={cmrLogo} alt="Centre for Meditation Research" className="size-8 rounded-full" />
             <span className="text-sm font-semibold tracking-tight sm:text-base">Centre for Meditation Research</span>
@@ -88,7 +88,7 @@ export function ApplyPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6">
         {isLoading && (
           <div className="space-y-6">
             <div className="space-y-2">
@@ -140,7 +140,9 @@ export function ApplyPage() {
                 <Link to="/">Back to home</Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link to="/contact">Contact us</Link>
+                <a href="https://med.cmb.ac.lk/cmr/contacts-2/" target="_blank" rel="noopener noreferrer">
+                  Contact us
+                </a>
               </Button>
             </div>
           </StatusSplitCard>

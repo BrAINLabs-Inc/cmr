@@ -11,6 +11,8 @@ import {
   bulkCreateStudentsSchema,
   patchStudentSchema,
   idParamSchema,
+  lateAccessParamSchema,
+  lateAccessBodySchema,
 } from '../../schemas/admin.schema.js';
 
 export const studentsRouter = Router();
@@ -95,3 +97,36 @@ studentsRouter.get('/students/:id/pending-weeks', validate(idParamSchema, 'param
 
   res.json({ pendingWeeks });
 });
+
+studentsRouter.get('/students/:id/late-access', validate(idParamSchema, 'params'), async (req, res) => {
+  const grants = unwrap(
+    await supabaseAdmin
+      .from('diary_late_access')
+      .select('id, week_number, allowed, note, updated_at')
+      .eq('student_id', req.params.id)
+      .order('week_number')
+  );
+  res.json({ grants });
+});
+
+studentsRouter.put(
+  '/students/:id/late-access/:week',
+  validate(lateAccessParamSchema, 'params'),
+  validate(lateAccessBodySchema),
+  async (req, res) => {
+    const { id, week } = req.params;
+    const { allowed, note } = req.body;
+
+    const grant = unwrap(
+      await supabaseAdmin
+        .from('diary_late_access')
+        .upsert(
+          { student_id: id, week_number: week, allowed, note, granted_by: req.admin.id },
+          { onConflict: 'student_id,week_number' }
+        )
+        .select('id, week_number, allowed, note, updated_at')
+        .single()
+    );
+    res.json({ grant });
+  }
+);

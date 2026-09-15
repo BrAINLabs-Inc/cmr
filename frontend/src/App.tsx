@@ -10,11 +10,7 @@ import { ApplyPage } from '@/pages/ApplyPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 
-const BoardMembersPage = lazy(() => import('@/pages/landing/BoardMembersPage').then((m) => ({ default: m.BoardMembersPage })))
-const ResearchPage = lazy(() => import('@/pages/landing/ResearchPage').then((m) => ({ default: m.ResearchPage })))
-const ServicesPage = lazy(() => import('@/pages/landing/ServicesPage').then((m) => ({ default: m.ServicesPage })))
-const ArchivesPage = lazy(() => import('@/pages/landing/ArchivesPage').then((m) => ({ default: m.ArchivesPage })))
-const ContactPage = lazy(() => import('@/pages/landing/ContactPage').then((m) => ({ default: m.ContactPage })))
+const PracticePage = lazy(() => import('@/pages/landing/PracticePage').then((m) => ({ default: m.PracticePage })))
 
 const DashboardPage = lazy(() => import('@/pages/student/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const DiaryWritePage = lazy(() => import('@/pages/student/DiaryWritePage').then((m) => ({ default: m.DiaryWritePage })))
@@ -41,11 +37,9 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/apply" element={<ApplyPage />} />
-        <Route path="/board-members" element={<BoardMembersPage />} />
-        <Route path="/research" element={<ResearchPage />} />
-        <Route path="/services" element={<ServicesPage />} />
-        <Route path="/archives" element={<ArchivesPage />} />
-        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/practice" element={<PracticePage />} />
+        {/* Board Members / Research / Services / Archives / Contact are temporarily down.
+            Those sections now link out to https://med.cmb.ac.lk/cmr/ instead. */}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 

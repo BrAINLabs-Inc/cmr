@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Flower2, HeartHandshake, Search } from 'lucide-react'
+import { CalendarClock, CheckCircle2, Flower2, HeartHandshake, IdCard, Mail, Search } from 'lucide-react'
 import { api } from '@/lib/api'
 import type { AdminCheckin, CheckinCohortStats, MoodFeeling } from '@/lib/types'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { usePageClamp } from '@/hooks/use-page-clamp'
 import { MOOD_LABELS, moodClassName, moodIcon } from '@/lib/mood'
 import { cn } from '@/lib/utils'
 import { Pagination } from '@/components/Pagination'
 import { WeeklyCheckin } from '@/components/WeeklyCheckin'
+import { MetaTile } from '@/components/MetaTile'
 import { MetricTileSkeleton, TableSkeleton } from '@/components/Skeletons'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +19,11 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return 'Not yet'
+  return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+}
 
 function CohortSnapshot() {
   const { data, isLoading } = useQuery({
@@ -113,6 +120,8 @@ export function CheckinsPage() {
     queryKey: ['admin-checkins', week, debouncedSearch, page],
     queryFn: () => api.get<{ checkins: AdminCheckin[]; total: number }>(`/admin/checkins?${params.toString()}`),
   })
+
+  usePageClamp(page, setPage, data?.total, PAGE_SIZE)
 
   function updateFilter(setter: (v: string) => void, value: string) {
     setter(value)
@@ -228,10 +237,13 @@ export function CheckinsPage() {
       </Card>
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-h-[85vh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selected?.student?.name}, Week {selected?.week_number}
+        <DialogContent className="flex h-[88vh] w-[min(96vw,64rem)] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none sm:w-[min(92vw,64rem)]">
+          <DialogHeader className="shrink-0 border-b px-6 py-4">
+            <DialogTitle className="flex flex-wrap items-center gap-2 text-lg">
+              {selected?.student?.name}
+              <Badge variant="outline" className="border-primary/30 font-normal text-primary">
+                Week {selected?.week_number}
+              </Badge>
               {selected?.checkin.meditation?.practiced && (
                 <Badge className="gap-1">
                   <CheckCircle2 className="size-3.5" />
@@ -240,7 +252,16 @@ export function CheckinsPage() {
               )}
             </DialogTitle>
           </DialogHeader>
-          {selected && <WeeklyCheckin value={selected.checkin} onChange={() => {}} disabled />}
+
+          <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <MetaTile icon={IdCard} label="Student ID" value={selected?.student?.student_number ?? '-'} />
+              <MetaTile icon={Mail} label="Email" value={selected?.student?.email ?? '-'} />
+              <MetaTile icon={CalendarClock} label="Last updated" value={formatDateTime(selected?.updated_at)} />
+            </div>
+
+            {selected && <WeeklyCheckin value={selected.checkin} onChange={() => {}} disabled />}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

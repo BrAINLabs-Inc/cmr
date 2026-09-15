@@ -213,7 +213,7 @@ export function ApplyForm({ intake, onSubmitted }: { intake: PublicIntake; onSub
           <img
             src={APPLICATION_ILLUSTRATION}
             alt=""
-            className="hidden h-32 w-32 shrink-0 object-contain sm:block md:h-40 md:w-40"
+            className="hidden h-40 w-40 shrink-0 object-contain sm:block md:h-56 md:w-56"
           />
         </div>
       </div>

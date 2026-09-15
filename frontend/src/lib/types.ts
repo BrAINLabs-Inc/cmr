@@ -58,7 +58,17 @@ export type DiaryEntry = {
   submitted_at: string | null
   updated_at?: string
   research_opt_out?: boolean
+  is_late?: boolean
   student?: Pick<Student, 'id' | 'name' | 'email' | 'student_number'>
+}
+
+// A week an active student never submitted, once its deadline has passed.
+// Has no diary_entries row, so it's a synthesized entry rather than a real one.
+export type MissedEntry = {
+  student_id: string
+  week_number: number
+  has_late_access: boolean
+  student: Pick<Student, 'id' | 'name' | 'email' | 'student_number'>
 }
 
 export type WeekSummary = {
@@ -69,13 +79,23 @@ export type WeekSummary = {
   isCurrent: boolean
   isOpen: boolean
   isLocked: boolean
+  hasLateAccess?: boolean
   dueDate: string
 }
 
 export type WeeksResponse = {
+  diaryStarted: boolean
   currentWeek: number
   totalWeeks: number
   weeks: WeekSummary[]
+}
+
+export type LateAccessGrant = {
+  id: string
+  week_number: number
+  allowed: boolean
+  note: string | null
+  updated_at: string
 }
 
 export type WeeklyStats = {

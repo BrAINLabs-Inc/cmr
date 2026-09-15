@@ -2,7 +2,17 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { AlertTriangle, ArrowRight, CalendarClock, CalendarRange, GraduationCap, Hourglass } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarClock,
+  CalendarRange,
+  CheckCircle2,
+  GraduationCap,
+  Hourglass,
+  PauseCircle,
+  PlayCircle,
+} from 'lucide-react'
 import { api, ApiError } from '@/lib/api'
 import type { Intake } from '@/lib/types'
 import { useAdminIntakes } from '@/hooks/use-admin-intakes'
@@ -14,6 +24,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
 type CourseSettings = {
   course_start_date: string
@@ -21,6 +32,8 @@ type CourseSettings = {
   total_weeks: number
   intake_id: string | null
   intake: Pick<Intake, 'id' | 'intake_number' | 'course_title' | 'status'> | null
+  is_started: boolean
+  started_at: string | null
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000
@@ -48,6 +61,7 @@ export function SettingsPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [saving, setSaving] = useState(false)
+  const [togglingStart, setTogglingStart] = useState(false)
 
   useEffect(() => {
     if (data?.settings) {
@@ -79,6 +93,21 @@ export function SettingsPage() {
       toast.error(err instanceof ApiError ? err.message : 'Could not update course settings')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleToggleStart(nextStarted: boolean) {
+    setTogglingStart(true)
+    try {
+      await api.post(`/admin/course-settings/${nextStarted ? 'start' : 'pause'}`)
+      toast.success(nextStarted ? 'Diary approved and started' : 'Diary paused')
+      queryClient.invalidateQueries({ queryKey: ['course-settings'] })
+      queryClient.invalidateQueries({ queryKey: ['weekly-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['weeks'] })
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Could not update diary status')
+    } finally {
+      setTogglingStart(false)
     }
   }
 
@@ -151,6 +180,50 @@ export function SettingsPage() {
           </Card>
         </div>
       ) : (
+        <div className="space-y-6">
+          {data?.settings && (
+            <Card
+              className={
+                data.settings.is_started
+                  ? 'border-emerald-500/20 bg-emerald-500/5'
+                  : 'border-amber-500/20 bg-amber-500/5'
+              }
+            >
+              <CardContent className="flex flex-col items-start justify-between gap-4 pt-6 sm:flex-row sm:items-center">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      'flex size-11 shrink-0 items-center justify-center rounded-xl',
+                      data.settings.is_started
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    )}
+                  >
+                    {data.settings.is_started ? <CheckCircle2 className="size-5" /> : <AlertTriangle className="size-5" />}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {data.settings.is_started ? 'Diary is live for students' : 'Diary has not started yet'}
+                    </p>
+                    <p className="mt-0.5 max-w-md text-xs text-muted-foreground">
+                      {data.settings.is_started
+                        ? `Approved${data.settings.started_at ? ` on ${formatDate(data.settings.started_at.slice(0, 10))}` : ''}. Students can write into the current week.`
+                        : "Students see nothing until you approve the start (e.g. once Module 3 actually begins). Editing the dates or intake below will reset this and require approving again."}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant={data.settings.is_started ? 'outline' : 'default'}
+                  disabled={togglingStart}
+                  onClick={() => handleToggleStart(!data.settings.is_started)}
+                >
+                  {data.settings.is_started ? <PauseCircle className="size-4" /> : <PlayCircle className="size-4" />}
+                  {togglingStart ? 'Updating…' : data.settings.is_started ? 'Pause Diary' : 'Approve & Start Diary'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
         <div className="grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start">
           {data?.settings && (
             <Card className="border-primary/20 bg-primary/5">
@@ -302,6 +375,7 @@ export function SettingsPage() {
               </CardFooter>
             </form>
           </Card>
+        </div>
         </div>
       )}
     </div>
