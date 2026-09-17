@@ -1,7 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Flower2, LogOut } from 'lucide-react'
+import { Flower2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
-import { cn } from '@/lib/utils'
 import cmrLogo from '@/assets/cmr-logo.png'
 import { studentNav, adminNav } from './nav-config'
 import {
@@ -18,8 +17,10 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 
+const APP_VERSION = 'v1.0.0'
+
 export function AppSidebar() {
-  const { role, signOut } = useAuth()
+  const { role } = useAuth()
   const location = useLocation()
   const nav = role === 'admin' ? adminNav : studentNav
 
@@ -77,22 +78,9 @@ export function AppSidebar() {
             </p>
           </div>
         )}
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => signOut()}
-              tooltip="Sign out"
-              className={cn(
-                'justify-center border border-red-200 bg-red-50 text-red-600',
-                'hover:bg-red-100 hover:text-red-700 active:bg-red-100 active:text-red-700',
-                'dark:border-red-900/40 dark:bg-red-950/25 dark:text-red-400 dark:hover:bg-red-950/40'
-              )}
-            >
-              <LogOut className="size-4" />
-              <span>Sign out</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <p className="px-2 pb-1 text-center text-xs text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
+          {APP_VERSION}
+        </p>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -40,7 +40,3 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
-        env:
-          VITE_SUPABASE_URL: https://placeholder.supabase.co
-          VITE_SUPABASE_ANON_KEY: placeholder-anon-key
-          VITE_API_URL: http://localhost:4000/api
