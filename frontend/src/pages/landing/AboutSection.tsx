@@ -13,9 +13,11 @@ import { HoverCard, PersonChip, SectionHeading } from './shared'
 import sliitLogo from '@/assets/partners/sliit-logo.svg'
 import imuLogo from '@/assets/partners/imu-university-logo.png'
 import harvardLogo from '@/assets/partners/harvard-medical-school-shield.png'
+import brainLabsLogo from '@/assets/brainlabs-logo.webp'
 
 const COLLABORATING_PARTNERS = [
-  { name: 'SLIIT', logo: sliitLogo },
+  { name: 'SLIIT', logo: sliitLogo, url: 'https://www.sliit.lk/' },
+  { name: 'Brain Labs', logo: brainLabsLogo, url: 'https://brainlabsinc.org/' },
   { name: 'IMU Malaysia', logo: imuLogo },
   { name: 'Harvard Medical School', logo: harvardLogo },
 ]
@@ -57,14 +59,20 @@ export function AboutSection() {
             Collaborating Partners
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-4">
-            {COLLABORATING_PARTNERS.map((partner) => (
-              <div
-                key={partner.name}
-                className="flex h-16 w-32 items-center justify-center rounded-lg border bg-white p-3 sm:w-36"
-              >
-                <img src={partner.logo} alt={partner.name} title={partner.name} className="max-h-full max-w-full object-contain" />
-              </div>
-            ))}
+            {COLLABORATING_PARTNERS.map((partner) => {
+              const tile = (
+                <div className="flex h-16 w-32 items-center justify-center rounded-lg border bg-white p-3 sm:w-36">
+                  <img src={partner.logo} alt={partner.name} title={partner.name} className="max-h-full max-w-full object-contain" />
+                </div>
+              )
+              return partner.url ? (
+                <a key={partner.name} href={partner.url} target="_blank" rel="noopener noreferrer">
+                  {tile}
+                </a>
+              ) : (
+                <div key={partner.name}>{tile}</div>
+              )
+            })}
           </div>
         </div>
       </div>

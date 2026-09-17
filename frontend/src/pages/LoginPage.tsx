@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { BrandMark } from '@/components/BrandMark'
+import { DevCredit } from '@/components/DevCredit'
 import { AuthLayout } from '@/components/AuthLayout'
 
 const LOGIN_ILLUSTRATION = '/vectors/login.webp'
@@ -85,6 +86,7 @@ export function LoginPage() {
           </p>
         </CardContent>
       </Card>
+      <DevCredit />
     </AuthLayout>
   )
 }

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { cn } from '@/lib/utils'
 import cmrLogo from '@/assets/cmr-logo.png'
+import brainLabsIcon from '@/assets/brainlabs-icon.webp'
 
 // Board Members / Research / Services / Archives / Contact are temporarily
 // down on this site, so those nav entries point out to the live pages on
@@ -244,10 +245,24 @@ export function SiteFooter({
           </div>
         </div>
 
-        <p className="mt-8 border-t pt-6 text-center text-xs text-muted-foreground">
-          {courseTitle ? `Certificate Course on ${courseTitle} · ` : ''}
-          Faculty of Medicine, University of Colombo
-        </p>
+        <div className="mt-8 flex flex-col items-center gap-2 border-t pt-6 text-center text-xs text-muted-foreground">
+          <p>
+            {courseTitle ? `Certificate Course on ${courseTitle} · ` : ''}
+            Faculty of Medicine, University of Colombo
+          </p>
+          <p className="flex items-center gap-1.5">
+            Developed by
+            <a
+              href="https://brainlabsinc.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-foreground"
+            >
+              <img src={brainLabsIcon} alt="" className="h-5 w-5 object-contain" />
+              <span className="font-medium text-foreground">BrainLabs</span>
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   )

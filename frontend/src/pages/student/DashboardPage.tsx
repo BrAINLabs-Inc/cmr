@@ -24,7 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatCardSkeleton } from '@/components/Skeletons'
 
 const WRITING_ILLUSTRATION = '/vectors/writing.webp'
-const RECENT_WEEKS_LIMIT = 6
+const RECENT_WEEKS_LIMIT = 3
 
 const STATUS_META = {
   submitted: { icon: CheckCircle2, label: 'Submitted', className: 'text-emerald-600 dark:text-emerald-400' },
