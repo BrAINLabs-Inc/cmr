@@ -46,7 +46,7 @@ considered client-ready.
 ## 3. Client delivery practices
 
 - **Requirements**: significant feature work should trace back to an
-  agreed requirement (see `SRS/`); flag scope questions to the client contact
+  agreed requirement (see `docs/`); flag scope questions to the client contact
   before building rather than guessing.
 - **Environments**: keep development, staging, and production configuration
   separate (`.env` per environment, distinct Supabase projects/keys) — never
