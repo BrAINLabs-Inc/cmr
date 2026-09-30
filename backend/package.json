@@ -38,5 +38,8 @@
     "pino-pretty": "^11.2.2",
     "supertest": "^7.0.0",
     "vitest": "^2.1.1"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
