@@ -2,6 +2,10 @@ import { supabase } from './supabase'
 
 const API_URL = import.meta.env.VITE_API_URL as string
 
+if (!API_URL) {
+  throw new Error('VITE_API_URL must be set (see .env.example)')
+}
+
 export class ApiError extends Error {
   status: number
   constructor(message: string, status: number) {
