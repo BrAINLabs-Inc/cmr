@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock3,
   MoreHorizontal,
+  Pencil,
   Search,
   ShieldCheck,
   UserCheck,
@@ -50,6 +51,7 @@ export function StudentsPage() {
   const [page, setPage] = useState(1)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [lateAccessStudent, setLateAccessStudent] = useState<Student | null>(null)
+  const [editStudent, setEditStudent] = useState<Student | null>(null)
   const queryClient = useQueryClient()
 
   const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) })
@@ -142,6 +144,10 @@ export function StudentsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditStudent(s)}>
+                            <Pencil className="size-4" />
+                            Edit
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setLateAccessStudent(s)}>
                             <CalendarClock className="size-4" />
                             Late Access
@@ -171,6 +177,11 @@ export function StudentsPage() {
       </Card>
 
       <LateAccessDialog student={lateAccessStudent} onOpenChange={(open) => !open && setLateAccessStudent(null)} />
+      <EditStudentDialog
+        student={editStudent}
+        onOpenChange={(open) => !open && setEditStudent(null)}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ['students'] })}
+      />
     </div>
   )
 }
@@ -310,6 +321,98 @@ function LateAccessDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function EditStudentDialog({
+  student,
+  onOpenChange,
+  onSaved,
+}: {
+  student: Student | null
+  onOpenChange: (open: boolean) => void
+  onSaved: () => void
+}) {
+  return (
+    <Dialog open={!!student} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Student</DialogTitle>
+        </DialogHeader>
+        {student && (
+          <EditStudentForm
+            key={student.id}
+            student={student}
+            onSaved={() => {
+              onOpenChange(false)
+              onSaved()
+            }}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EditStudentForm({ student, onSaved }: { student: Student; onSaved: () => void }) {
+  const [studentNumber, setStudentNumber] = useState(student.student_number)
+  const [name, setName] = useState(student.name)
+  const [email, setEmail] = useState(student.email)
+  const [submitting, setSubmitting] = useState(false)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    const patch: Record<string, string> = {}
+    if (studentNumber.trim() !== student.student_number) patch.studentNumber = studentNumber
+    if (name.trim() !== student.name) patch.name = name
+    if (email.trim().toLowerCase() !== student.email.toLowerCase()) patch.email = email
+    if (Object.keys(patch).length === 0) {
+      onSaved()
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await api.patch(`/admin/students/${student.id}`, patch)
+      toast.success('Student updated')
+      onSaved()
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : 'Could not update student')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div className="space-y-2">
+        <Label htmlFor="editStudentNumber">Student ID</Label>
+        <Input
+          id="editStudentNumber"
+          required
+          value={studentNumber}
+          onChange={(e) => setStudentNumber(e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="editName">Name</Label>
+        <Input id="editName" required value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="editEmail">Email</Label>
+        <Input id="editEmail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+        {student.auth_user_id && (
+          <p className="text-xs text-muted-foreground">
+            This student has registered. Changing the email also changes the email they log in with.
+          </p>
+        )}
+      </div>
+      <DialogFooter>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? 'Saving…' : 'Save Changes'}
+        </Button>
+      </DialogFooter>
+    </form>
   )
 }
 

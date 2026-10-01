@@ -65,10 +65,29 @@ studentsRouter.patch(
     if (email) patch.email = email;
     if (studentNumber) patch.student_number = studentNumber;
 
+    const existing = unwrap(
+      await supabaseAdmin.from('students').select('*').eq('id', req.params.id).single(),
+      'Student not found'
+    );
+
     const student = unwrap(
       await supabaseAdmin.from('students').update(patch).eq('id', req.params.id).select('*').single(),
       'Student not found'
     );
+
+    // Registered students sign in with their Supabase Auth email, so keep it
+    // in step with the roster; roll the roster back if the auth update fails.
+    if (patch.email && existing.auth_user_id && patch.email !== existing.email.toLowerCase()) {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(existing.auth_user_id, {
+        email: patch.email,
+        email_confirm: true,
+      });
+      if (error) {
+        await supabaseAdmin.from('students').update({ email: existing.email }).eq('id', req.params.id);
+        throw new AppError(400, `Could not update login email: ${error.message}`);
+      }
+    }
+
     res.json({ student });
   }
 );
