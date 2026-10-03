@@ -27,7 +27,7 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-const corsOrigins = parsed.data.CORS_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean);
+const corsOrigins = parsed.data.CORS_ORIGIN.split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean);
 
 if (parsed.data.NODE_ENV === 'production' && corsOrigins.length === 0) {
   console.error('CORS_ORIGIN must be set to an explicit comma-separated origin list in production.');
